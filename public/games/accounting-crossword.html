@@ -178,11 +178,10 @@ html,body{
       <div class="crossword" id="grid"></div>
     </div>
     <div class="actions">
-      <button class="btn" id="check">✔ CHECK ANSWERS</button>
       <button class="btn secondary" id="hint">💡 REVEAL LETTER −30</button>
       <button class="btn secondary" id="clear">🧹 CLEAR WORD</button>
     </div>
-    <div class="feedback" id="feedback">Click a clue or square and type your answer! (+100 per word · +2/sec time bonus)</div>
+    <div class="feedback" id="feedback">Click a clue or square and type — answers check automatically (Green = Right, Red = Wrong)!</div>
   </section>
 
   <aside class="panel">
@@ -202,8 +201,8 @@ html,body{
   <div class="modal" id="modal">
     <div style="font-size:48px;">🧩</div>
     <h2>Easy Accounting Crossword</h2>
-    <p>Solve <b>10 simple, fun accounting words</b> in 5 minutes! Click any clue to highlight its squares and type straight in.</p>
-    <p><b>Scoring:</b> +100 per word · −20 wrong check · −30 letter hint · +2 bonus per second left!</p>
+    <p>Solve <b>10 simple, fun accounting words</b> in 5 minutes! Answers check <b>automatically</b> as soon as you finish a word — Green if right, Red if wrong.</p>
+    <p><b>Scoring:</b> +100 per word · −20 wrong word · −30 letter hint · +2 bonus per second left!</p>
     <button class="btn" id="start">🚀 START PUZZLE</button>
   </div>
 </div>
@@ -282,7 +281,7 @@ const puzzleIndex = Math.floor(Math.random() * PUZZLES.length);
 const puzzle = PUZZLES[puzzleIndex];
 const rows = puzzle.rows, cols = puzzle.cols, entries = puzzle.entries;
 
-let score=0,seconds=300,solved=new Set(),wrongChecks=0,selected=null,activeDir='A',timer=null,ended=false,playing=false,paused=false,inputs={},starting=false;
+let score=0,seconds=300,solved=new Set(),wrongChecks=0,lastWrong={},selected=null,activeDir='A',timer=null,ended=false,playing=false,paused=false,inputs={},starting=false;
 $('puzzleid').textContent = 'Puzzle ' + String.fromCharCode(65 + puzzleIndex) + ' / 3';
 
 function key(r,c){return r+','+c}
@@ -314,17 +313,26 @@ function renderGrid(){
       inp.maxLength=1;inp.autocomplete='off';inp.spellcheck=false;inp.dataset.r=r;inp.dataset.c=c;
       inputs[key(r,c)]=inp;
       inp.addEventListener('input',()=>{
+        if(inp.readOnly)return;
         inp.value=inp.value.toUpperCase().replace(/[^A-Z]/g,'').slice(-1);
         inp.parentElement.classList.remove('wrong');
-        if(inp.value){audio.sfx('click');moveNext(r,c);}
+        if(inp.value){
+          audio.sfx('click');
+          autoCheckCell(r,c);
+          if(!ended)moveNext(r,c);
+        }else{
+          clearWrongForCell(r,c);
+        }
       });
       inp.addEventListener('keydown',ev=>{
-        if(ev.key==='Backspace'&&!inp.value){movePrev(r,c);ev.preventDefault()}
+        if(ev.key==='Backspace'){
+          if(inp.readOnly||!inp.value){movePrev(r,c);ev.preventDefault();}
+          else{clearWrongForCell(r,c);}
+        }
         if(ev.key==='ArrowRight'){focusCell(r,c+1);ev.preventDefault()}
         if(ev.key==='ArrowLeft'){focusCell(r,c-1);ev.preventDefault()}
         if(ev.key==='ArrowDown'){focusCell(r+1,c);ev.preventDefault()}
         if(ev.key==='ArrowUp'){focusCell(r-1,c);ev.preventDefault()}
-        if(ev.key==='Enter'){check();ev.preventDefault()}
       });
       inp.addEventListener('focus',()=>selectCell(r,c));
       d.appendChild(inp);
@@ -348,8 +356,24 @@ function highlight(){
   });
 }
 function focusCell(r,c){const inp=inputs[key(r,c)];if(inp)inp.focus();}
-function moveNext(r,c){if(!selected)return;const coords=cellCoords(selected),i=coords.findIndex(p=>p[0]===r&&p[1]===c);if(i>=0&&i<coords.length-1)focusCell(...coords[i+1]);}
-function movePrev(r,c){if(!selected)return;const coords=cellCoords(selected),i=coords.findIndex(p=>p[0]===r&&p[1]===c);if(i>0)focusCell(...coords[i-1]);}
+function moveNext(r,c){
+  if(!selected)return;
+  const coords=cellCoords(selected),i=coords.findIndex(p=>p[0]===r&&p[1]===c);
+  for(let j=i+1;j<coords.length;j++){
+    const nextInp=inputs[key(...coords[j])];
+    if(nextInp&&!nextInp.readOnly){nextInp.focus();return;}
+  }
+  if(i>=0&&i<coords.length-1)focusCell(...coords[i+1]);
+}
+function movePrev(r,c){
+  if(!selected)return;
+  const coords=cellCoords(selected),i=coords.findIndex(p=>p[0]===r&&p[1]===c);
+  for(let j=i-1;j>=0;j--){
+    const prevInp=inputs[key(...coords[j])];
+    if(prevInp&&!prevInp.readOnly){prevInp.focus();return;}
+  }
+  if(i>0)focusCell(...coords[i-1]);
+}
 function renderClues(dir,id){
   const el=$(id);
   entries.filter(e=>e.dir===dir).sort((a,b)=>a.number-b.number).forEach(e=>{
@@ -372,27 +396,70 @@ function updateHud(){
 }
 function setFeedback(t,cls=''){$('feedback').className='feedback '+cls;$('feedback').textContent=t;}
 
-function check(){
+function entriesAtCell(r,c){
+  return entries.filter(e=>cellCoords(e).some(p=>p[0]===r&&p[1]===c));
+}
+
+function clearWrongForCell(r,c){
+  entriesAtCell(r,c).forEach(e=>{
+    const id=e.number+'-'+e.dir;
+    if(solved.has(id))return;
+    cellCoords(e).forEach(([rr,cc])=>{
+      const cell=inputs[key(rr,cc)]?.parentElement;
+      if(cell&&!cell.classList.contains('correct'))cell.classList.remove('wrong');
+    });
+  });
+}
+
+function autoCheckCell(r,c){
   if(!playing||paused||ended)return;
-  let newly=0,wrong=0;
-  entries.forEach(e=>{
-    if(solved.has(e.number+'-'+e.dir))return;
+  const touching=entriesAtCell(r,c);
+  let newlySolved=[];
+  let wrongWords=0;
+
+  touching.forEach(e=>{
+    const id=e.number+'-'+e.dir;
+    if(solved.has(id))return;
     const ans=getAnswer(e);
-    if(ans.length===e.word.length&&ans===e.word){
-      solved.add(e.number+'-'+e.dir);newly++;score+=100;
-      cellCoords(e).forEach(([r,c])=>{
-        inputs[key(r,c)].parentElement.classList.remove('wrong');
-        inputs[key(r,c)].parentElement.classList.add('correct');
+    if(ans.length<e.word.length){
+      cellCoords(e).forEach(([rr,cc])=>{
+        const cell=inputs[key(rr,cc)]?.parentElement;
+        if(cell&&!cell.classList.contains('correct'))cell.classList.remove('wrong');
       });
-    }else if(ans.length===e.word.length&&ans!==e.word){
-      wrong++;
-      cellCoords(e).forEach(([r,c])=>{if(inputs[key(r,c)].value)inputs[key(r,c)].parentElement.classList.add('wrong');});
+      return;
+    }
+    if(ans===e.word){
+      solved.add(id);
+      delete lastWrong[id];
+      score+=100;
+      newlySolved.push(e.word);
+      cellCoords(e).forEach(([rr,cc])=>{
+        const inp=inputs[key(rr,cc)];
+        inp.readOnly=true;
+        inp.parentElement.classList.remove('wrong');
+        inp.parentElement.classList.add('correct');
+      });
+    }else{
+      cellCoords(e).forEach(([rr,cc])=>{
+        const cell=inputs[key(rr,cc)]?.parentElement;
+        if(cell&&!cell.classList.contains('correct'))cell.classList.add('wrong');
+      });
+      if(lastWrong[id]!==ans){
+        lastWrong[id]=ans;
+        wrongChecks++;
+        wrongWords++;
+        score=Math.max(0,score-20);
+      }
     }
   });
-  if(wrong){wrongChecks+=wrong;score=Math.max(0,score-20*wrong);}
-  if(newly){audio.sfx('good');setFeedback(newly+' word(s) correct! +'+(newly*100)+' points.','good');}
-  else if(wrong){audio.sfx('bad');setFeedback('Some completed words are incorrect. −'+(wrong*20)+' points.','bad');}
-  else setFeedback('Fill in a complete word first, then click Check Answers.');
+
+  if(newlySolved.length){
+    audio.sfx('good');
+    setFeedback('✅ Correct: '+newlySolved.join(', ')+'! +'+(newlySolved.length*100)+' points.','good');
+  }else if(wrongWords){
+    audio.sfx('bad');
+    setFeedback('❌ Incorrect word (−'+(wrongWords*20)+' pts). Fix the red letters!','bad');
+  }
   highlight();updateHud();
   if(solved.size===entries.length)finish(true);
 }
@@ -403,18 +470,23 @@ function hint(){
   if(idx<0)return setFeedback('This word has no empty letters.','bad');
   const [r,c]=coords[idx];
   inputs[key(r,c)].value=selected.word[idx];
+  inputs[key(r,c)].parentElement.classList.remove('wrong');
   score=Math.max(0,score-30);
   audio.sfx('click');
-  updateHud();
   setFeedback('Revealed letter '+selected.word[idx]+' (−30 points).','good');
+  updateHud();
+  autoCheckCell(r,c);
 }
 
 function clearWord(){
   if(!playing||paused||!selected)return;
+  const id=selected.number+'-'+selected.dir;
+  delete lastWrong[id];
   cellCoords(selected).forEach(([r,c])=>{
-    if(!inputs[key(r,c)].parentElement.classList.contains('correct')){
-      inputs[key(r,c)].value='';
-      inputs[key(r,c)].parentElement.classList.remove('wrong');
+    const inp=inputs[key(r,c)];
+    if(!inp.readOnly&&!inp.parentElement.classList.contains('correct')){
+      inp.value='';
+      inp.parentElement.classList.remove('wrong');
     }
   });
   focusCell(selected.r,selected.c);
@@ -528,7 +600,7 @@ window.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&playing&&!ended){e.preventDefault();if(paused)resumeGame();else pauseGame();}
 });
 
-$('check').onclick=check;$('hint').onclick=hint;$('clear').onclick=clearWord;$('start').onclick=start;
+$('hint').onclick=hint;$('clear').onclick=clearWord;$('start').onclick=start;
 window.addEventListener('resize',fitGridSize);
 renderGrid();renderClues('A','across');renderClues('D','down');updateHud();
 window.FinPlayBridge.init('accounting-crossword').then(()=>setTimeout(fitGridSize,60));

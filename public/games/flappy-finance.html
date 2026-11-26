@@ -87,8 +87,8 @@ html,body{
 }
 .q-prompt{
   font-family:'Fredoka','Outfit',sans-serif;
-  font-size:clamp(17px,2.2vw,24px);font-weight:700;color:#fff;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:clamp(18px,2.3vw,25px);font-weight:700;color:#fff;
+  white-space:normal;overflow-wrap:break-word;
   line-height:1.15;
 }
 
@@ -253,26 +253,37 @@ const SPEED_INCREMENT = 0.65;
 const MAX_GATE_SPEED = 6.5;
 
 const questions = [
-  ["Opening Stock","Trading Account","Profit & Loss Account","A","FINAL ACCOUNTS"],
-  ["Purchases of Goods","Balance Sheet","Trading Account","B","FINAL ACCOUNTS"],
-  ["Sales","Trading Account","Profit & Loss Account","A","FINAL ACCOUNTS"],
-  ["Carriage Inwards","Trading Account","Balance Sheet","A","FINAL ACCOUNTS"],
-  ["Direct Wages","Profit & Loss Account","Trading Account","B","FINAL ACCOUNTS"],
-  ["Office Rent","Profit & Loss Account","Trading Account","A","FINAL ACCOUNTS"],
-  ["Office Salaries","Trading Account","Profit & Loss Account","B","FINAL ACCOUNTS"],
-  ["Advertisement Expense","Balance Sheet","Profit & Loss Account","B","FINAL ACCOUNTS"],
-  ["Commission Received","Profit & Loss Account","Trading Account","A","FINAL ACCOUNTS"],
-  ["Discount Allowed","Profit & Loss Account","Balance Sheet","A","FINAL ACCOUNTS"],
+  // Final Accounts (16)
+  ["Opening Stock","Trading Account","Profit & Loss A/c","A","FINAL ACCOUNTS"],
+  ["Purchases","Balance Sheet","Trading Account","B","FINAL ACCOUNTS"],
+  ["Sales Revenue","Trading Account","Balance Sheet","A","FINAL ACCOUNTS"],
+  ["Carriage Inwards","Trading Account","Profit & Loss A/c","A","FINAL ACCOUNTS"],
+  ["Direct Wages","Profit & Loss A/c","Trading Account","B","FINAL ACCOUNTS"],
+  ["Factory Power","Trading Account","Balance Sheet","A","FINAL ACCOUNTS"],
+  ["Office Rent","Profit & Loss A/c","Trading Account","A","FINAL ACCOUNTS"],
+  ["Office Salaries","Trading Account","Profit & Loss A/c","B","FINAL ACCOUNTS"],
+  ["Advertisement","Balance Sheet","Profit & Loss A/c","B","FINAL ACCOUNTS"],
+  ["Commission Received","Profit & Loss A/c","Trading Account","A","FINAL ACCOUNTS"],
+  ["Discount Allowed","Profit & Loss A/c","Balance Sheet","A","FINAL ACCOUNTS"],
+  ["Bad Debts","Profit & Loss A/c","Trading Account","A","FINAL ACCOUNTS"],
   ["Cash in Hand","Balance Sheet","Trading Account","A","FINAL ACCOUNTS"],
-  ["Machinery","Profit & Loss Account","Balance Sheet","B","FINAL ACCOUNTS"],
-  ["Trade Debtors","Balance Sheet","Trading Account","A","FINAL ACCOUNTS"],
-  ["Trade Creditors","Profit & Loss Account","Balance Sheet","B","FINAL ACCOUNTS"],
-  ["Owner’s Capital","Trading Account","Balance Sheet","B","FINAL ACCOUNTS"],
-  ["Credit Purchase of Goods","Purchases Book","Sales Book","A","BOOKS OF ENTRY"],
-  ["Credit Sale of Goods","Purchases Book","Sales Book","B","BOOKS OF ENTRY"],
-  ["Goods Returned to Supplier","Purchases Returns Book","Sales Returns Book","A","BOOKS OF ENTRY"],
-  ["Goods Returned by Customer","Sales Returns Book","Purchases Returns Book","A","BOOKS OF ENTRY"],
-  ["Cash Received from Customer","Cash Book","Purchases Book","A","BOOKS OF ENTRY"]
+  ["Machinery","Profit & Loss A/c","Balance Sheet","B","FINAL ACCOUNTS"],
+  ["Owner's Capital","Trading Account","Balance Sheet","B","FINAL ACCOUNTS"],
+  ["Bank Overdraft","Balance Sheet","Profit & Loss A/c","A","FINAL ACCOUNTS"],
+  // Books of Original Entry (6)
+  ["Credit Purchases","Purchases Book","Sales Book","A","BOOKS OF ENTRY"],
+  ["Credit Sales","Purchases Book","Sales Book","B","BOOKS OF ENTRY"],
+  ["Returns Outward","Purchases Returns","Sales Returns","A","BOOKS OF ENTRY"],
+  ["Returns Inward","Sales Returns","Purchases Returns","A","BOOKS OF ENTRY"],
+  ["Cash Received","Cash Book","Sales Book","A","BOOKS OF ENTRY"],
+  ["Cash Paid","Cash Book","Purchases Book","A","BOOKS OF ENTRY"],
+  // Account Classification (6)
+  ["Trade Debtors","Current Asset","Current Liability","A","CLASSIFICATION"],
+  ["Trade Creditors","Current Asset","Current Liability","B","CLASSIFICATION"],
+  ["Goodwill","Intangible Asset","Current Asset","A","CLASSIFICATION"],
+  ["Bank Loan","Liability","Asset","A","CLASSIFICATION"],
+  ["Prepaid Rent","Asset","Liability","A","CLASSIFICATION"],
+  ["Outstanding Wages","Liability","Asset","A","CLASSIFICATION"]
 ];
 
 // Game state
@@ -587,7 +598,7 @@ function scheduleNextQuestion(delayMs) {
   }, delayMs);
 }
 
-function loseLife(reason, gx, gy) {
+function loseLife(reason, gx, gy, rightAnswerText = '') {
   if (!playing) return;
   lives = Math.max(0, lives - 1);
   shakeFrames = 14;
@@ -603,13 +614,16 @@ function loseLife(reason, gx, gy) {
     return;
   }
 
-  showBanner(reason === 'miss' ? 'GATE MISSED! −1 LIFE' : 'WRONG GATE! −1 LIFE', '#ff5e8a', 60);
+  const msg = reason === 'miss'
+    ? 'GATE MISSED! −1 LIFE' + (rightAnswerText ? ' · Answer: ' + rightAnswerText : '')
+    : 'WRONG! Answer: ' + (rightAnswerText || 'Other Gate');
+  showBanner(msg, '#ff5e8a', 70);
   updateHud();
   if (lives === 0) {
     endGame();
     return;
   }
-  scheduleNextQuestion(580);
+  scheduleNextQuestion(650);
 }
 
 function resolveGate(g) {
@@ -628,7 +642,8 @@ function resolveGate(g) {
     scheduleNextQuestion(480);
   } else {
     g.state = 'wrong';
-    loseLife('wrong', g.x + g.w / 2, g.y);
+    const correctOpt = gate.options.find(x => x.option.correct)?.option.text || '';
+    loseLife('wrong', g.x + g.w / 2, g.y, correctOpt);
   }
 }
 
@@ -1074,7 +1089,8 @@ function update(dt) {
       const rightmost = Math.max(...gate.options.map(g => g.x + g.w));
       if (rightmost < player.x - 24) {
         gate.resolved = true;
-        loseLife('miss', player.x, player.y);
+        const correctOpt = gate.options.find(x => x.option.correct)?.option.text || '';
+        loseLife('miss', player.x, player.y, correctOpt);
         if (!playing) return;
       }
     }

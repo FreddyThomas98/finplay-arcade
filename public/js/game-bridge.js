@@ -23,13 +23,14 @@
         position: sticky;
         top: 0;
         z-index: 900;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
-        padding: 10px 18px;
-        background: rgba(10, 15, 38, 0.92);
+        padding: 7px 14px;
+        background: rgba(10, 15, 38, 0.94);
         backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(139, 172, 255, 0.25);
         font-family: 'Outfit', system-ui, -apple-system, sans-serif;

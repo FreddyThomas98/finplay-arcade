@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Finance Blaster | FinPlay Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{
+  margin:0;padding:0;width:100%;height:100dvh;overflow:hidden;
+  color:#f3f7ff;font-family:'Outfit',system-ui,Arial;
+  background:#090e24;display:flex;flex-direction:column;
+  user-select:none;-webkit-user-select:none;
+}
+.app{
+  flex:1;min-height:0;width:100%;
+  display:flex;flex-direction:column;
+  padding:8px 12px 10px;gap:8px;overflow:hidden;
+  background:radial-gradient(circle at 18% 12%,rgba(255,94,138,.2),transparent 36%),
+             radial-gradient(circle at 86% 16%,rgba(34,229,210,.2),transparent 38%),
+             linear-gradient(160deg,#090e24 0%,#141d46 58%,#0b112c 100%);
+}
+.hudbar{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(25,37,84,.94),rgba(16,24,58,.94));
+  border:1px solid rgba(139,172,255,.32);border-radius:16px;padding:7px 14px;
+}
+.logo{font-family:'Fredoka','Outfit',sans-serif;font-size:22px;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+.logo b{color:#ff5e8a}
+.hud-stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stat{background:rgba(9,14,36,.68);border:1px solid rgba(139,172,255,.26);border-radius:11px;padding:4px 11px;min-width:66px;text-align:center;line-height:1.15}
+.stat small{display:block;color:#a6b7db;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.stat strong{font-family:'Fredoka','Outfit',sans-serif;font-size:18px}
+#score{color:#ffd147}
+#lives{color:#ff5e8a}
+#time{color:#22e5d2}
+.hud-controls{display:flex;gap:6px;align-items:center}
+.icon-btn{
+  border:1px solid rgba(139,172,255,.28);border-radius:10px;padding:7px 11px;
+  background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:700;font-size:12px;cursor:pointer;
+}
+.icon-btn:hover{background:rgba(255,94,138,.2);border-color:#ff5e8a}
+.bar{flex-shrink:0;height:7px;background:rgba(255,255,255,.1);border-radius:9px;overflow:hidden}
+.fill{height:100%;width:100%;background:linear-gradient(90deg,#22e5d2,#ffd147);transition:width .08s linear}
+.stage{
+  flex:1;min-height:0;position:relative;
+  border:1.5px solid rgba(34,229,210,.36);border-radius:18px;overflow:hidden;
+  background:#0d1638;box-shadow:0 16px 42px rgba(0,0,0,.48);
+}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.question{position:absolute;top:12px;left:0;right:0;text-align:center;pointer-events:none}
+.question small{color:#ffd147;text-transform:uppercase;letter-spacing:2px;font-size:11px;font-weight:800}
+.question h1{font-family:'Fredoka','Outfit',sans-serif;font-size:clamp(24px,4.2vw,42px);margin:2px 0;text-shadow:0 4px 18px rgba(0,0,0,.9)}
+.feedback{position:absolute;top:92px;left:0;right:0;text-align:center;font-family:'Fredoka','Outfit',sans-serif;font-weight:700;font-size:22px;pointer-events:none;text-shadow:0 3px 12px rgba(0,0,0,.8)}
+.hint{position:absolute;bottom:8px;left:14px;color:rgba(195,214,248,.65);font-size:11px;font-weight:700;pointer-events:none}
+.overlay{
+  position:fixed;inset:0;background:rgba(7,11,28,.88);backdrop-filter:blur(7px);
+  display:flex;align-items:center;justify-content:center;padding:16px;z-index:80;
+}
+.modal{
+  max-width:460px;width:100%;background:linear-gradient(160deg,#1c295c,#11193b);
+  border:1px solid rgba(255,94,138,.48);border-radius:22px;padding:28px;text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
+}
+.modal h2{font-family:'Fredoka','Outfit',sans-serif;margin:6px 0 8px;font-size:28px;color:#ffd147}
+.modal p{color:#c7d6f2;line-height:1.55;font-size:14px}
+.primary-btn{
+  border:0;border-radius:12px;background:linear-gradient(135deg,#ff5e8a,#ff8a5b);
+  color:#fff;font-family:inherit;font-weight:800;padding:13px 24px;font-size:15px;cursor:pointer;
+  box-shadow:0 4px 0 #b82552;margin-top:8px;
+}
+.primary-btn:active{transform:translateY(2px)}
+@media(max-width:600px){.app{padding:6px;gap:6px}.logo{font-size:18px}.stat{padding:3px 7px;min-width:54px}.stat strong{font-size:15px}.icon-btn{padding:6px 8px;font-size:11px}}
+</style></head><body><main class="app">
+<header class="hudbar">
+  <div class="logo">🔫 FINANCE <b>BLASTER</b></div>
+  <div class="hud-stats">
+    <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+    <div class="stat"><small>Level</small><strong id="level">1</strong></div>
+    <div class="stat"><small>Lives</small><strong id="lives">♥ ♥ ♥</strong></div>
+    <div class="stat"><small>Time</small><strong id="time">15.0s</strong></div>
+  </div>
+  <div class="hud-controls">
+    <button class="icon-btn" id="musicBtn" title="Mute / Unmute Music & SFX">🎵 Music</button>
+    <button class="icon-btn" id="pauseBtn" title="Pause Game (P / Esc)">⏸ Pause</button>
+    <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">⛶ Full</button>
+  </div>
+</header>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<div class="stage" id="stage">
+  <canvas id="game"></canvas>
+  <div class="question"><small>Classify &amp; Blast This Item</small><h1 id="question">Cash Sales</h1></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="hint">Aim &amp; click/tap to fire · Keys 1–6 quick-shoot · P/Esc Pause</div>
+</div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div style="font-size:48px;">🔫</div>
+    <h2>Ready, Sharpshooter?</h2>
+    <p>Aim your neon plasma blaster and shoot the correct accounting category before the <b>15-second</b> timer runs out! Timer gradually gets faster in higher levels.</p>
+    <p><b>Controls:</b> Mouse + click, tap a target, or press keys <b>1–6</b>.</p>
+    <button class="primary-btn" id="start">🚀 START GAME</button>
+  </div>
+</div>
+
+<div class="overlay" id="pauseOverlay" style="display:none">
+  <div class="modal">
+    <div style="font-size:48px;">⏸️</div>
+    <h2>Blaster Paused</h2>
+    <p>The countdown and targets are frozen safely until you resume.</p>
+    <button class="primary-btn" id="resumeBtn">▶ Resume Game</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const state = {
+    slug: 'offline',
+    isAdmin: true,
+    isLocked: false,
+    attemptsUsed: 0,
+    maxAttempts: 999,
+    attemptsLeft: 999,
+    bestScore: 0
+  };
+
+  function storageKey() {
+    return 'finplay_offline_best_' + state.slug;
+  }
+
+  function loadBest() {
+    try {
+      const v = Number(localStorage.getItem(storageKey()) || 0);
+      return Number.isFinite(v) && v > 0 ? v : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function saveBest(val) {
+    try {
+      localStorage.setItem(storageKey(), String(val));
+    } catch (_) {}
+  }
+
+  function injectStyles() {
+    if (document.getElementById('finplay-offline-style')) return;
+    const style = document.createElement('style');
+    style.id = 'finplay-offline-style';
+    style.textContent = `
+      .fp-topbar {
+        position: sticky; top: 0; z-index: 900; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        padding: 7px 16px;
+        background: rgba(10, 15, 38, 0.94);
+        border-bottom: 1px solid rgba(139, 172, 255, 0.25);
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        color: #f3f7ff;
+      }
+      .fp-brand { font-weight: 800; font-size: 14px; letter-spacing: 0.02em; color: #22e5d2; }
+      .fp-brand span { color: #ffd147; }
+      .fp-pills { display: flex; align-items: center; gap: 8px; }
+      .fp-pill {
+        padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;
+        border: 1px solid rgba(139, 172, 255, 0.3); background: rgba(21, 30, 68, 0.9);
+      }
+      .fp-pill.gold { color: #ffd147; border-color: rgba(255, 209, 71, 0.45); }
+      .fp-pill.ok { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
+      .fp-confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+      .fp-toast {
+        position: fixed; bottom: 18px; right: 18px; z-index: 980;
+        background: #17214a; border: 1px solid #22e5d2; color: #fff;
+        padding: 10px 16px; border-radius: 13px;
+        font-family: 'Outfit', system-ui, sans-serif; font-weight: 700; font-size: 13px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderBar() {
+    let bar = document.getElementById('finplay-topbar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'finplay-topbar';
+      bar.className = 'fp-topbar';
+      document.body.prepend(bar);
+    }
+    bar.innerHTML = `
+      <div class="fp-brand">🎮 FinPlay <span>Arcade</span> · 🔫 Finance Blaster</div>
+      <div class="fp-pills">
+        <span class="fp-pill ok">⚡ Local Edition</span>
+        <span class="fp-pill gold" id="fpBestPill">⭐ Best: ${state.bestScore.toLocaleString()}</span>
+      </div>
+    `;
+  }
+
+  function toast(msg) {
+    const el = document.createElement('div');
+    el.className = 'fp-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function celebrate() {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'fp-confetti';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const colors = ['#ffd147', '#22e5d2', '#ff5e8a', '#a78bfa', '#34d399'];
+    const parts = Array.from({ length: 70 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -15 - Math.random() * 100,
+      w: 8, h: 5,
+      vx: (Math.random() - 0.5) * 5,
+      vy: 3 + Math.random() * 5,
+      r: Math.random() * 6,
+      vr: (Math.random() - 0.5) * 0.25,
+      c: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    let f = 0;
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      parts.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.c; ctx.fillRect(-4, -2.5, p.w, p.h);
+        ctx.restore();
+      });
+      if (++f < 95) requestAnimationFrame(tick);
+      else canvas.remove();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  window.FinPlayBridge = {
+    async init(slug) {
+      state.slug = slug;
+      state.bestScore = loadBest();
+      injectStyles();
+      renderBar();
+      return true;
+    },
+    async beginAttempt() {
+      return { ok: true, attemptsLeft: 999, bestScore: state.bestScore, isAdmin: true };
+    },
+    async finishAttempt(score) {
+      const s = Math.max(0, Math.round(Number(score) || 0));
+      const isNewBest = s > state.bestScore;
+      if (isNewBest) {
+        state.bestScore = s;
+        saveBest(s);
+        renderBar();
+        if (s > 0) {
+          celebrate();
+          toast('🎉 New Personal Best: ' + s.toLocaleString() + '!');
+        }
+      }
+      return { ok: true, score: s, bestScore: state.bestScore, isNewBest, attemptsLeft: 999, isAdmin: true };
+    },
+    showLockOverlay() {},
+    getState: () => ({ ...state })
+  };
+})();
+</script>
+<script>
+(() => {
+  'use strict';
+
+  // Five distinct procedural arcade soundtracks synthesized via Web Audio API (zero external MP3s).
+  // MIDI note helper -> frequency in Hz
+  function midi(n) {
+    return 440 * Math.pow(2, (n - 69) / 12);
+  }
+
+  const TRACKS = {
+    // 1. Flappy Finance — bright, bouncy C-major flight chiptune
+    flappy: {
+      bpm: 132,
+      leadWave: 'triangle',
+      bassWave: 'sine',
+      leadGain: 0.045,
+      bassGain: 0.04,
+      lead: [72, 76, 79, 84, 79, 76, 74, 79, 77, 81, 84, 81, 79, 76, 74, 0,
+             72, 76, 79, 86, 84, 81, 79, 76, 77, 74, 71, 74, 72, 0, 79, 0],
+      bass: [48, 0, 55, 0, 52, 0, 55, 0, 53, 0, 60, 0, 55, 0, 50, 0,
+             48, 0, 55, 0, 57, 0, 52, 0, 53, 0, 55, 0, 48, 0, 55, 0]
+    },
+    // 2. Finance Hangman — quirky detective mystery groove in A minor
+    hangman: {
+      bpm: 106,
+      leadWave: 'sine',
+      bassWave: 'triangle',
+      leadGain: 0.048,
+      bassGain: 0.042,
+      lead: [69, 0, 72, 76, 75, 0, 72, 0, 71, 0, 74, 76, 72, 0, 69, 0,
+             69, 72, 76, 81, 80, 0, 76, 0, 74, 72, 71, 68, 69, 0, 0, 0],
+      bass: [45, 0, 52, 0, 45, 0, 48, 0, 47, 0, 52, 0, 45, 0, 40, 0,
+             45, 0, 52, 0, 44, 0, 52, 0, 50, 0, 47, 0, 45, 0, 45, 0]
+    },
+    // 3. Finance Blaster — high-energy neon synthwave action pulse in E minor
+    blaster: {
+      bpm: 146,
+      leadWave: 'sawtooth',
+      bassWave: 'square',
+      leadGain: 0.026,
+      bassGain: 0.024,
+      lead: [64, 67, 71, 76, 71, 67, 74, 71, 72, 76, 79, 76, 74, 71, 69, 67,
+             64, 71, 76, 79, 78, 76, 74, 71, 72, 74, 76, 74, 71, 67, 64, 0],
+      bass: [40, 40, 52, 40, 40, 40, 50, 40, 48, 48, 60, 48, 47, 47, 55, 47,
+             40, 40, 52, 40, 43, 43, 55, 43, 48, 48, 50, 50, 47, 47, 40, 0]
+    },
+    // 4. Cash Collector — cheerful adventure platformer chiptune in G major
+    collector: {
+      bpm: 138,
+      leadWave: 'square',
+      bassWave: 'triangle',
+      leadGain: 0.025,
+      bassGain: 0.042,
+      lead: [67, 71, 74, 79, 76, 74, 71, 0, 72, 76, 79, 76, 74, 0, 71, 0,
+             67, 71, 74, 81, 79, 76, 74, 71, 72, 74, 76, 78, 79, 0, 0, 0],
+      bass: [43, 0, 50, 0, 47, 0, 50, 0, 48, 0, 55, 0, 50, 0, 50, 0,
+             43, 0, 50, 0, 52, 0, 47, 0, 48, 0, 50, 0, 43, 0, 50, 0]
+    },
+    // 5. Accounting Crossword — calm, crisp Lo-Fi puzzle synth in F major
+    crossword: {
+      bpm: 94,
+      leadWave: 'sine',
+      bassWave: 'sine',
+      leadGain: 0.044,
+      bassGain: 0.036,
+      lead: [65, 69, 72, 77, 76, 72, 69, 0, 67, 70, 74, 79, 77, 74, 70, 0,
+             69, 72, 76, 81, 79, 76, 72, 0, 70, 74, 72, 69, 65, 0, 0, 0],
+      bass: [41, 0, 48, 0, 45, 0, 48, 0, 43, 0, 50, 0, 46, 0, 50, 0,
+             45, 0, 52, 0, 48, 0, 52, 0, 46, 0, 48, 0, 41, 0, 48, 0]
+    }
+  };
+
+  class ArcadeAudio {
+    constructor(trackName) {
+      this.trackName = TRACKS[trackName] ? trackName : 'flappy';
+      this.ctx = null;
+      this.muted = localStorage.getItem('finplay_muted') === '1';
+      this.playingMusic = false;
+      this.pausedMusic = false;
+      this.step = 0;
+      this.timer = null;
+    }
+
+    ensureCtx() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        this.ctx = new AC();
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return this.ctx;
+    }
+
+    tone(freq, duration = 0.12, wave = 'sine', vol = 0.04, delay = 0) {
+      if (this.muted || !freq) return;
+      const ctx = this.ensureCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      } catch (_) {}
+    }
+
+    startMusic() {
+      this.playingMusic = true;
+      this.pausedMusic = false;
+      this._scheduleLoop();
+    }
+
+    stopMusic() {
+      this.playingMusic = false;
+      this.pausedMusic = false;
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    pauseMusic() {
+      this.pausedMusic = true;
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    resumeMusic() {
+      if (!this.playingMusic) return;
+      this.pausedMusic = false;
+      this._scheduleLoop();
+    }
+
+    _scheduleLoop() {
+      clearInterval(this.timer);
+      if (this.muted || !this.playingMusic || this.pausedMusic) return;
+      const t = TRACKS[this.trackName];
+      const stepMs = Math.round((60000 / t.bpm) / 2); // eighth notes
+      this.ensureCtx();
+      this.timer = setInterval(() => {
+        if (this.muted || !this.playingMusic || this.pausedMusic || document.hidden) return;
+        const i = this.step % t.lead.length;
+        const leadNote = t.lead[i];
+        const bassNote = t.bass[i];
+        if (leadNote) this.tone(midi(leadNote), (stepMs / 1000) * 0.9, t.leadWave, t.leadGain);
+        if (bassNote) this.tone(midi(bassNote), (stepMs / 1000) * 1.1, t.bassWave, t.bassGain);
+        this.step++;
+      }, stepMs);
+    }
+
+    toggleMute() {
+      this.muted = !this.muted;
+      try { localStorage.setItem('finplay_muted', this.muted ? '1' : '0'); } catch (_) {}
+      if (this.muted) {
+        clearInterval(this.timer);
+        this.timer = null;
+      } else {
+        this.ensureCtx();
+        this._scheduleLoop();
+        this.sfx('click');
+      }
+      return this.muted;
+    }
+
+    sfx(kind) {
+      if (this.muted) return;
+      switch (kind) {
+        case 'flap':
+          this.tone(440, 0.05, 'triangle', 0.045);
+          break;
+        case 'jump':
+          this.tone(340, 0.06, 'square', 0.03);
+          this.tone(520, 0.07, 'square', 0.028, 0.04);
+          break;
+        case 'shoot':
+          this.tone(580, 0.05, 'sawtooth', 0.03);
+          this.tone(260, 0.07, 'sawtooth', 0.025, 0.03);
+          break;
+        case 'good':
+          this.tone(660, 0.08, 'triangle', 0.05);
+          this.tone(880, 0.12, 'triangle', 0.05, 0.06);
+          break;
+        case 'levelup':
+          this.tone(523, 0.08, 'triangle', 0.05);
+          this.tone(659, 0.08, 'triangle', 0.05, 0.07);
+          this.tone(784, 0.09, 'triangle', 0.05, 0.14);
+          this.tone(1046, 0.16, 'triangle', 0.055, 0.21);
+          break;
+        case 'bad':
+          this.tone(190, 0.14, 'sawtooth', 0.045);
+          this.tone(140, 0.18, 'sawtooth', 0.04, 0.09);
+          break;
+        case 'hanged':
+          // Dramatic descending cartoon-defeat cadence
+          this.tone(330, 0.18, 'sawtooth', 0.045, 0);
+          this.tone(294, 0.18, 'sawtooth', 0.045, 0.18);
+          this.tone(262, 0.22, 'sawtooth', 0.045, 0.36);
+          this.tone(196, 0.42, 'sawtooth', 0.05, 0.58);
+          break;
+        case 'win':
+          this.tone(523, 0.1, 'triangle', 0.055, 0);
+          this.tone(659, 0.1, 'triangle', 0.055, 0.09);
+          this.tone(784, 0.12, 'triangle', 0.055, 0.18);
+          this.tone(1046, 0.28, 'triangle', 0.06, 0.28);
+          break;
+        default:
+          this.tone(540, 0.05, 'sine', 0.035);
+      }
+    }
+  }
+
+  window.FinPlayAudio = {
+    create: trackName => new ArcadeAudio(trackName)
+  };
+})();
+
+</script>
+<script>
+(()=>{
+'use strict';
+const c=document.querySelector('#game'),stageEl=document.querySelector('#stage'),x=c.getContext('2d'),$=id=>document.getElementById(id);
+const audio = window.FinPlayAudio.create('blaster');
+
+const H = 560;
+let W = 1100;
+const GUN_Y = H - 52;
+
+const cats=[
+{name:'ASSET',color:'#34d399',items:['Office Furniture','Machinery','Cash in Hand','Debtors','Building','Computer','Inventory','Bank Balance','Motor Vehicle']},
+{name:'LIABILITY',color:'#ff5e8a',items:['Bank Loan','Creditors','Outstanding Salary','Bank Overdraft','Bills Payable','Unpaid Rent']},
+{name:'INCOME',color:'#38bdf8',items:['Cash Sales','Credit Sales','Commission Received','Interest Received','Rent Received','Discount Received']},
+{name:'EXPENSE',color:'#ffd147',items:['Rent Paid','Salary','Electricity Bill','Wages','Stationery','Advertising','Insurance Premium','Purchases']},
+{name:'CAPITAL',color:'#a78bfa',items:['Capital Introduced','Owner Investment','Additional Capital']},
+{name:'DRAWINGS',color:'#f472b6',items:['Cash Withdrawn by Owner','Goods Taken for Personal Use','Personal Withdrawal']}
+];
+
+let score=0,level=1,lives=3,limit=15,left=15,playing=false,paused=false,last=0,targets=[],q={term:'Cash Sales',answer:'INCOME'},aim={x:550,y:280},parts=[],bullets=[],blasts=[],feedback='',fb=0,starting=false;
+let recoil=0,muzzleFlash=0,nextTimer=0,roundLocked=false,shake=0;
+
+function resizeCanvas(){
+  const r=stageEl.getBoundingClientRect();
+  if(r.width<10||r.height<10)return;
+  W=Math.round(Math.max(820,Math.min(1440,H*(r.width/r.height))));
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
+  x.setTransform(dpr,0,0,dpr,0,0);
+  if(!playing) renderStatic();
+}
+
+function mix(a){return [...a].sort(()=>Math.random()-.5)}
+function hud(){
+  $('score').textContent=score;
+  $('level').textContent=level;
+  $('lives').textContent='♥ '.repeat(Math.max(0,lives)).trim()||'—';
+  $('time').textContent=left.toFixed(1)+'s';
+  $('fill').style.width=(left/limit*100)+'%';
+  $('fill').style.background=left<limit*.3?'#ff5e8a':'linear-gradient(90deg,#22e5d2,#ffd147)';
+}
+function next(){
+  roundLocked=false;
+  const cat=cats[Math.floor(Math.random()*cats.length)];
+  q={term:cat.items[Math.floor(Math.random()*cat.items.length)],answer:cat.name};
+  $('question').textContent=q.term;
+  targets=mix(cats).map(a=>{
+    const px=90+Math.random()*(W-180),py=160+Math.random()*225,ang=Math.random()*6.283,sp=95+Math.random()*75;
+    return {name:a.name,color:a.color,x:px,y:py,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,r:54};
+  });
+  left=limit;hud();
+}
+function say(t,col){feedback=t;$('feedback').textContent=t;$('feedback').style.color=col;fb=.85}
+function burst(px,py,col,count=18,maxSpeed=5.2,size=4.5){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*6.283,s=1.8+Math.random()*maxSpeed;
+    parts.push({x:px,y:py,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:2.5+Math.random()*size,life:.72,maxLife:.72,col});
+  }
+}
+function spawnBallBlast(t, isCorrect){
+  const mainCol = isCorrect ? '#22c55e' : '#ff2e55';
+  const brightCol = isCorrect ? '#a7f3d0' : '#ff9eb5';
+  // Remove the actual target ball so it visibly explodes!
+  targets = targets.filter(item => item !== t);
+  blasts.push({
+    x: t.x, y: t.y, r: t.r * 0.6, maxR: t.r * 2.6,
+    life: 0.48, maxLife: 0.48, color: mainCol, core: brightCol,
+    label: isCorrect ? '+100' : 'WRONG!'
+  });
+  burst(t.x, t.y, mainCol, 28, 7.5, 5.5);
+  burst(t.x, t.y, brightCol, 14, 5.0, 3.5);
+  if (!isCorrect) shake = 0.36;
+}
+
+async function end(){
+  playing=false;paused=false;clearTimeout(nextTimer);
+  audio.stopMusic();audio.sfx('bad');
+  const res = await window.FinPlayBridge.finishAttempt(score);
+  const st = window.FinPlayBridge.getState();
+  const rem = res.attemptsLeft ?? st.attemptsLeft;
+  const canAgain = st.isAdmin || rem > 0;
+  $('modal').innerHTML=`<div style="font-size:48px;">${res.isNewBest?'🏆':'🔫'}</div><h2>${res.isNewBest?'New Personal Best!':'Game Over!'}</h2><p>Final score: <b style="color:#ffd147;font-size:26px;">${score}</b><br>Level reached: <b>${level}</b> · Best score: <b>${res.bestScore??st.bestScore}</b>${st.isAdmin?'':`<br>Tries remaining: <b>${rem}</b>`}</p><button class="primary-btn" id="again">${canAgain?(st.isAdmin?'PLAY AGAIN':`🚀 PLAY AGAIN (${rem} LEFT)`):'🕹️ BACK TO ARCADE'}</button>`;
+  $('overlay').style.display='flex';
+  $('again').onclick=()=>{if(!canAgain){location.href='/';return;}start();};
+}
+
+function miss(msg, delayMs = 0){
+  roundLocked=true;
+  lives--;say(msg,'#ff4d6d');audio.sfx('bad');hud();
+  clearTimeout(nextTimer);
+  if(lives<=0){
+    nextTimer=setTimeout(()=>{if(playing)end();}, delayMs || 420);
+  }else{
+    nextTimer=setTimeout(()=>{if(playing&&!paused)next();}, delayMs || 520);
+  }
+}
+
+function shoot(px,py){
+  if(!playing||paused||roundLocked)return;
+  const gx=W/2,gy=GUN_Y;
+  const dx=px-gx,dy=py-gy,d=Math.hypot(dx,dy)||1;
+  const ux=dx/d,uy=dy/d;
+  const mx=gx+ux*64,my=gy+uy*64;
+  bullets.push({x:mx,y:my,vx:ux*880,vy:uy*880,life:1.6});
+  recoil=13;
+  muzzleFlash=0.11;
+  burst(mx,my,'#ffd147',6,3.2,2.5);
+  audio.sfx('shoot');
+}
+
+function hitTarget(t){
+  if(roundLocked)return;
+  roundLocked=true;
+  bullets=[];
+  if(t.name===q.answer){
+    spawnBallBlast(t, true);
+    score+=100;
+    const nl=Math.floor(score/500)+1;
+    if(nl>level){
+      level=nl;
+      limit=Math.max(5.0, 15.0 - (level - 1) * 1.25);
+      say('LEVEL '+level+'! ('+limit.toFixed(1)+'s)','#ffd147');
+      audio.sfx('levelup');
+    }else{
+      say('GREEN BLAST! +100','#34d399');
+      audio.sfx('good');
+    }
+    hud();
+    clearTimeout(nextTimer);
+    nextTimer=setTimeout(()=>{if(playing&&!paused)next();},500);
+  }else{
+    spawnBallBlast(t, false);
+    miss('WRONG TARGET! −1 LIFE', 580);
+  }
+}
+
+function coords(e){
+  const r=c.getBoundingClientRect();
+  aim.x=(e.clientX-r.left)*W/r.width;
+  aim.y=(e.clientY-r.top)*H/r.height;
+}
+
+function bg(){
+  x.clearRect(0,0,W,H);
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#131e4d');g.addColorStop(1,'#090f2b');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(139,172,255,.09)';x.lineWidth=1;
+  for(let a=0;a<W;a+=50){x.beginPath();x.moveTo(a,0);x.lineTo(a,H);x.stroke()}
+  for(let b=0;b<H;b+=50){x.beginPath();x.moveTo(0,b);x.lineTo(W,b);x.stroke()}
+}
+
+function drawTarget(t,i){
+  const gr=x.createRadialGradient(t.x,t.y,5,t.x,t.y,78);
+  gr.addColorStop(0,t.color+'66');gr.addColorStop(1,t.color+'00');
+  x.fillStyle=gr;x.beginPath();x.arc(t.x,t.y,78,0,7);x.fill();
+  x.fillStyle=t.color;x.beginPath();x.arc(t.x,t.y,t.r,0,7);x.fill();
+  x.strokeStyle='#ffffffaa';x.lineWidth=3;x.stroke();
+  x.fillStyle='#081226';x.textAlign='center';x.textBaseline='middle';
+  x.font='900 15px Outfit,system-ui';x.fillText(t.name,t.x,t.y);
+  x.font='bold 11px Outfit,system-ui';x.fillStyle='#fff';x.fillText('['+(i+1)+']',t.x,t.y+25);
+}
+
+// Detailed stylized sci-fi pistol/blaster gun with grip, receiver, barrel, sight, recoil & muzzle flash
+function drawGun(){
+  const gx=W/2,gy=GUN_Y;
+  const ang=Math.atan2(aim.y-gy,aim.x-gx);
+
+  // Subtle laser sight beam to crosshair
+  x.save();
+  x.strokeStyle='rgba(255,94,138,0.22)';
+  x.setLineDash([6,6]);x.lineWidth=1.5;
+  x.beginPath();x.moveTo(gx+Math.cos(ang)*62,gy+Math.sin(ang)*62);x.lineTo(aim.x,aim.y);x.stroke();
+  x.setLineDash([]);
+  x.restore();
+
+  // Swivel base mount at bottom
+  x.save();
+  x.fillStyle='#192659';x.strokeStyle='#38bdf8';x.lineWidth=2.5;
+  x.beginPath();x.arc(gx,gy+16,32,Math.PI,0);x.fill();x.stroke();
+  x.restore();
+
+  // Gun rotated toward aim (positive X = barrel forward direction!)
+  x.save();
+  x.translate(gx,gy);
+  x.rotate(ang);
+  const flip = Math.cos(ang) < 0 ? -1 : 1; // keep grip pointing down even when aiming left!
+  x.scale(1, flip);
+  x.translate(-recoil, 0);
+
+  // 1. Ergonomic Pistol Grip
+  x.fillStyle='#2a3a70';x.strokeStyle='#94b3e8';x.lineWidth=2;
+  x.beginPath();
+  x.moveTo(-22,6);x.lineTo(-30,30);x.lineTo(-12,32);x.lineTo(-5,10);
+  x.closePath();x.fill();x.stroke();
+  // Grip texture strips
+  x.fillStyle='#151f47';
+  x.fillRect(-23,14,10,3);x.fillRect(-25,21,10,3);
+
+  // 2. Trigger Guard & Trigger
+  x.strokeStyle='#8ea4d2';x.lineWidth=2.2;
+  x.beginPath();x.moveTo(-4,10);x.lineTo(14,10);x.quadraticCurveTo(18,19,8,20);x.lineTo(-8,20);x.stroke();
+  x.strokeStyle='#ffd147';x.lineWidth=2.5;
+  x.beginPath();x.moveTo(3,10);x.quadraticCurveTo(1,16,5,18);x.stroke();
+
+  // 3. Main Gun Receiver / Slide Body
+  const bodyGrad=x.createLinearGradient(0,-14,0,12);
+  bodyGrad.addColorStop(0,'#dce8ff');bodyGrad.addColorStop(.45,'#7f98c7');bodyGrad.addColorStop(1,'#31447a');
+  x.fillStyle=bodyGrad;
+  x.beginPath();
+  x.roundRect(-26,-13,60,24,5);
+  x.fill();
+  x.strokeStyle='#c7daff';x.lineWidth=1.8;x.stroke();
+
+  // Glowing neon energy strip on slide
+  x.fillStyle='#22e5d2';x.shadowColor='#22e5d2';x.shadowBlur=10;
+  x.fillRect(-16,-4,36,5);
+  x.shadowBlur=0;
+
+  // Rear sight + glowing red-dot optic on top rail
+  x.fillStyle='#1b2754';
+  x.fillRect(-20,-19,24,6);
+  x.fillStyle='#ff5e8a';
+  x.fillRect(-10,-21,6,4);
+
+  // 4. Extended Barrel & Cooling Vents
+  x.fillStyle='#4f669e';
+  x.beginPath();x.roundRect(32,-10,30,16,3);x.fill();
+  x.strokeStyle='#b8ceff';x.lineWidth=1.5;x.stroke();
+  // Cooling vents
+  x.fillStyle='#10183a';
+  x.fillRect(38,-7,4,10);x.fillRect(46,-7,4,10);
+  // Reinforced Muzzle Tip
+  x.fillStyle='#22e5d2';
+  x.fillRect(60,-11,6,18);
+
+  // 5. Muzzle Flash Starburst on fire
+  if(muzzleFlash > 0){
+    x.save();
+    x.translate(68,-2);
+    x.fillStyle='#fff6b0';x.shadowColor='#ffd147';x.shadowBlur=22;
+    x.beginPath();
+    for(let p=0;p<8;p++){
+      const r=p%2===0?24:9;
+      const a=(p*Math.PI)/4;
+      if(p===0)x.moveTo(Math.cos(a)*r,Math.sin(a)*r);
+      else x.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+    }
+    x.closePath();x.fill();
+    x.restore();
+  }
+
+  x.restore();
+}
+
+function drawCrosshair(){
+  x.strokeStyle='#22e5d2';x.lineWidth=1.8;
+  x.beginPath();
+  x.arc(aim.x,aim.y,13,0,7);
+  x.moveTo(aim.x-22,aim.y);x.lineTo(aim.x-7,aim.y);
+  x.moveTo(aim.x+7,aim.y);x.lineTo(aim.x+22,aim.y);
+  x.moveTo(aim.x,aim.y-22);x.lineTo(aim.x,aim.y-7);
+  x.moveTo(aim.x,aim.y+7);x.lineTo(aim.x,aim.y+22);
+  x.stroke();
+}
+
+function renderStatic(){
+  bg();
+  if(!targets.length){
+    targets=mix(cats).map(a=>{
+      const ang=Math.random()*6.283,sp=115;
+      return {name:a.name,color:a.color,x:100+Math.random()*(W-200),y:175+Math.random()*210,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,r:54};
+    });
+  }
+  targets.forEach((t,i)=>drawTarget(t,i));
+  drawGun();
+}
+
+function loop(now){
+  if(!playing)return;
+  if(paused){last=now;requestAnimationFrame(loop);return;}
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  if(!roundLocked){
+    left-=dt;
+    if(left<=0){left=0;hud();shake=0.3;miss('TIME UP! −1 LIFE', 520);}
+  }
+  if(fb>0){fb-=dt;if(fb<=0)$('feedback').textContent='';}
+  if(recoil>0)recoil=Math.max(0,recoil-dt*75);
+  if(muzzleFlash>0)muzzleFlash=Math.max(0,muzzleFlash-dt);
+  if(shake>0)shake=Math.max(0,shake-dt);
+
+  x.save();
+  if(shake>0){
+    const mag=shake*22;
+    x.translate((Math.random()-.5)*mag,(Math.random()-.5)*mag);
+  }
+  bg();
+  targets.forEach((t,i)=>{
+    t.x+=t.vx*dt;t.y+=t.vy*dt;
+    if(t.x<t.r+12){t.x=t.r+12;t.vx=Math.abs(t.vx)}
+    if(t.x>W-t.r-12){t.x=W-t.r-12;t.vx=-Math.abs(t.vx)}
+    if(t.y<125+t.r){t.y=125+t.r;t.vy=Math.abs(t.vy)}
+    if(t.y>GUN_Y-72-t.r){t.y=GUN_Y-72-t.r;t.vy=-Math.abs(t.vy)}
+    drawTarget(t,i);
+  });
+
+  // Render dramatic green/red ball blast explosions
+  blasts=blasts.filter(b=>b.life>0);
+  blasts.forEach(b=>{
+    b.life-=dt;
+    const prog=1-Math.max(0,b.life/b.maxLife);
+    const alpha=Math.max(0,b.life/b.maxLife);
+    const radius=b.r+(b.maxR-b.r)*prog;
+    x.save();
+    // Bright core blast fireball
+    const fg=x.createRadialGradient(b.x,b.y,4,b.x,b.y,radius);
+    fg.addColorStop(0,b.core);
+    fg.addColorStop(0.45,b.color);
+    fg.addColorStop(1,'rgba(0,0,0,0)');
+    x.globalAlpha=alpha*0.92;
+    x.fillStyle=fg;
+    x.beginPath();x.arc(b.x,b.y,radius,0,Math.PI*2);x.fill();
+    // Crisp expanding shockwave ring
+    x.globalAlpha=alpha;
+    x.strokeStyle=b.core;x.lineWidth=5*(1-prog*.6);
+    x.beginPath();x.arc(b.x,b.y,radius*1.08,0,Math.PI*2);x.stroke();
+    // Pop-up blast text
+    x.font='900 22px Fredoka,Outfit,system-ui';x.textAlign='center';x.textBaseline='middle';
+    x.fillStyle='#ffffff';x.shadowColor=b.color;x.shadowBlur=12;
+    x.fillText(b.label,b.x,b.y-prog*28);
+    x.restore();
+  });
+
+  bullets=bullets.filter(b=>b.life>0);
+  bullets.forEach(b=>{
+    const step=Math.min(dt,b.life);b.x+=b.vx*step;b.y+=b.vy*step;b.life-=step;
+    x.save();
+    x.strokeStyle='#ffd147';x.shadowColor='#22e5d2';x.shadowBlur=12;x.lineWidth=5;x.lineCap='round';
+    x.beginPath();x.moveTo(b.x-b.vx*.028,b.y-b.vy*.028);x.lineTo(b.x,b.y);x.stroke();
+    x.restore();
+    if(!roundLocked){
+      for(const t of targets){
+        if(Math.hypot(b.x-t.x,b.y-t.y)<t.r+6){b.life=0;hitTarget(t);break;}
+      }
+    }
+  });
+
+  drawGun();
+  drawCrosshair();
+
+  parts=parts.filter(p=>p.life>0);
+  parts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.life-=dt;
+    x.globalAlpha=Math.max(0,p.life/(p.maxLife||.7));x.fillStyle=p.col;
+    x.beginPath();x.arc(p.x,p.y,p.r||3.5,0,7);x.fill();x.globalAlpha=1;
+  });
+  x.restore();
+
+  hud();
+  requestAnimationFrame(loop);
+}
+
+async function start(){
+  if(starting)return;
+  starting=true;
+  try{
+    const res = await window.FinPlayBridge.beginAttempt();
+    if(!res.ok)return;
+    score=0;level=1;lives=3;limit=15;left=15;playing=true;paused=false;roundLocked=false;parts=[];bullets=[];blasts=[];recoil=0;muzzleFlash=0;shake=0;
+    $('overlay').style.display='none';$('pauseOverlay').style.display='none';
+    audio.startMusic();
+    next();
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }finally{starting=false;}
+}
+
+function pauseGame(){
+  if(!playing||paused)return;
+  paused=true;audio.pauseMusic();
+  $('pauseBtn').textContent='▶ Resume';
+  $('pauseOverlay').style.display='flex';
+}
+function resumeGame(){
+  if(!playing||!paused)return;
+  paused=false;last=performance.now();audio.resumeMusic();
+  $('pauseBtn').textContent='⏸ Pause';
+  $('pauseOverlay').style.display='none';
+}
+
+function syncMusicBtn(){$('musicBtn').textContent=audio.muted?'🔇 Muted':'🎵 Music';}
+syncMusicBtn();
+$('musicBtn').onclick=()=>{audio.toggleMute();syncMusicBtn();};
+$('pauseBtn').onclick=()=>{if(paused)resumeGame();else pauseGame();};
+$('resumeBtn').onclick=resumeGame;
+$('fullscreenBtn').onclick=async()=>{
+  try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(_){}
+};
+document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').textContent=document.fullscreenElement?'✕ Exit':'⛶ Full';setTimeout(resizeCanvas,60);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing&&!paused)pauseGame();});
+
+c.addEventListener('pointermove',coords);
+c.addEventListener('pointerdown',e=>{coords(e);shoot(aim.x,aim.y);});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'||e.key==='p'||e.key==='P'){
+    if(playing){e.preventDefault();if(paused)resumeGame();else pauseGame();}
+    return;
+  }
+  if(!playing||paused)return;
+  const n=Number(e.key);
+  if(n>=1&&n<=6&&targets[n-1]){
+    aim.x=targets[n-1].x;aim.y=targets[n-1].y;
+    shoot(targets[n-1].x,targets[n-1].y);
+  }
+});
+$('start').onclick=start;
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+window.FinPlayBridge.init('finance-blaster').then(()=>setTimeout(resizeCanvas,50));
+})();
+</script></body></html>

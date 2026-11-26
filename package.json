@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test:load": "node scripts/load-test.js"
+    "test:load": "node scripts/load-test.js",
+    "export:standalone": "node scripts/export-standalone.js"
   },
   "engines": {
     "node": ">=18.0.0"

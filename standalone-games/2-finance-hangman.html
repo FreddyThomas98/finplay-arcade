@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Finance Hangman | FinPlay Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090e24;--panel:#16214a;--line:rgba(139,172,255,.26);
+  --text:#f3f7ff;--muted:#a6b7db;--cyan:#22e5d2;--gold:#ffd147;--red:#ff5e8a;--green:#34d399;--violet:#a78bfa
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;padding:0;width:100%;height:100dvh;overflow:hidden;
+  color:var(--text);font-family:'Outfit',system-ui,Segoe UI,Arial,sans-serif;
+  background:#090e24;display:flex;flex-direction:column;
+}
+.app{
+  flex:1;min-height:0;width:100%;
+  display:flex;flex-direction:column;
+  padding:8px 14px 10px;gap:8px;overflow:hidden;
+  background:radial-gradient(circle at 15% 10%,rgba(34,229,210,.2),transparent 36%),
+             radial-gradient(circle at 86% 18%,rgba(167,139,250,.2),transparent 38%),
+             linear-gradient(160deg,#090e24 0%,#141d46 58%,#0d1330 100%);
+}
+/* Compact Unified HUD Bar */
+.hudbar{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(25,37,84,.94),rgba(16,24,58,.94));
+  border:1px solid rgba(139,172,255,.32);border-radius:16px;padding:7px 14px;
+}
+.brand-mini{display:flex;align-items:center;gap:9px}
+.logo{font-family:'Fredoka','Outfit',sans-serif;font-weight:700;font-size:21px;letter-spacing:.3px;white-space:nowrap}
+.logo b{color:var(--cyan)}
+.hud-stats{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.stat{
+  background:rgba(9,14,36,.68);border:1px solid var(--line);
+  border-radius:11px;padding:4px 10px;min-width:66px;text-align:center;line-height:1.15;
+}
+.stat small{display:block;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.stat strong{font-family:'Fredoka','Outfit',sans-serif;font-size:17px;color:#fff}
+#score{color:var(--gold)}
+#streak{color:var(--green)}
+#level{color:var(--cyan)}
+.hud-controls{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  border:1px solid var(--line);border-radius:10px;padding:7px 11px;
+  background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:700;font-size:12px;cursor:pointer;
+  transition:background .15s,border-color .15s;
+}
+.icon-btn:hover{background:rgba(34,229,210,.18);border-color:var(--cyan)}
+
+.progress{flex-shrink:0;height:6px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));transition:width .25s}
+
+/* Main 2-column full-height stage */
+.layout{
+  flex:1;min-height:0;
+  display:grid;grid-template-columns:1.2fr .85fr;gap:12px;overflow:hidden;
+}
+.panel{
+  background:linear-gradient(155deg,rgba(26,39,88,.9),rgba(17,24,58,.9));
+  border:1px solid var(--line);border-radius:18px;padding:14px 18px;
+  min-width:0;min-height:0;
+  display:flex;flex-direction:column;justify-content:space-between;
+  box-shadow:0 12px 32px rgba(0,0,0,.3);overflow:hidden;
+}
+.panelhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.eyebrow{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
+.levelchip{font-size:10px;font-weight:800;border-radius:99px;padding:4px 10px;background:rgba(167,139,250,.18);border:1px solid rgba(167,139,250,.4);color:#ddd6fe}
+.category{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
+.clue{font-family:'Fredoka','Outfit',sans-serif;font-size:clamp(16px,2vw,22px);font-weight:600;line-height:1.3;margin:4px 0}
+.word{display:flex;justify-content:center;gap:clamp(4px,.8vw,9px);flex-wrap:wrap;margin:10px 0;min-height:46px;align-items:center}
+.letter{
+  width:clamp(24px,3.4vw,38px);height:42px;border-bottom:3px solid #6b89c7;
+  display:grid;place-items:center;font-family:'Fredoka','Outfit',sans-serif;
+  font-size:clamp(16px,2.4vw,24px);font-weight:700;text-transform:uppercase;
+}
+.letter.revealed{color:var(--gold);border-color:var(--gold);text-shadow:0 0 12px rgba(255,209,71,.35)}
+.letter.space{width:14px;border:0}
+.keyboard{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:6px}
+.key{
+  padding:clamp(7px,1.2vh,11px) 0;border:1px solid rgba(139,172,255,.32);border-radius:9px;
+  background:rgba(34,49,105,.92);color:#f3f7ff;font-weight:800;font-size:14px;cursor:pointer;
+  transition:transform .12s,background .15s;
+}
+.key:hover:not(:disabled){background:#344ea8;transform:translateY(-2px);border-color:var(--cyan)}
+.key:disabled{opacity:.3;cursor:default}
+.key.good{background:#125946;border-color:var(--green);color:#bbf7d0;opacity:1}
+.key.bad{background:#64233b;border-color:var(--red);color:#fecdd3;opacity:.65}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{font:inherit}
+.btn{
+  border:0;border-radius:11px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;
+  background:linear-gradient(135deg,var(--cyan),#38bdf8);color:#041c28;
+  box-shadow:0 4px 0 #0e9e91;transition:transform .12s;
+}
+.btn:active:not(:disabled){transform:translateY(2px)}
+.btn.secondary{background:rgba(255,255,255,.1);color:#f3f7ff;border:1px solid var(--line);box-shadow:none}
+.btn.secondary:hover:not(:disabled){background:rgba(255,209,71,.16);border-color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.feedback{
+  min-height:38px;margin-top:8px;border-radius:11px;padding:8px 12px;
+  background:rgba(9,14,36,.72);color:#c3d4f0;font-size:13px;line-height:1.35;border:1px solid transparent;
+}
+.feedback.good{color:#a7f3d0;border-color:rgba(52,211,153,.5);background:rgba(16,185,129,.12)}
+.feedback.bad{color:#fecdd3;border-color:rgba(255,94,138,.5);background:rgba(255,94,138,.12)}
+
+/* Gallows Drawing + Hanging Death / Rescue Animations */
+.drawing{
+  flex:1;min-height:140px;position:relative;
+  display:flex;justify-content:center;align-items:center;
+  background:rgba(9,14,36,.76);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;margin:8px 0;transition:border-color .25s,box-shadow .25s;
+}
+.drawing.hanged-state{
+  border-color:rgba(255,94,138,.85);
+  box-shadow:inset 0 0 42px rgba(255,94,138,.32);
+}
+.drawing.saved-state{
+  border-color:rgba(52,211,153,.85);
+  box-shadow:inset 0 0 42px rgba(52,211,153,.28);
+}
+.drawing svg{width:min(100%,310px);max-height:100%;height:auto}
+.gallows{stroke:#7c97cf;stroke-width:7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rope{stroke:#ffd147;stroke-width:4;fill:none;stroke-linecap:round;transition:all .3s}
+.person{stroke:#ffd147;stroke-width:5.5;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .2s,stroke .25s}
+.person.show{opacity:1;filter:drop-shadow(0 0 6px rgba(255,209,71,.45))}
+.hanged-group{transform-origin:190px 44px}
+.drawing.hanged-state .person.show{stroke:#ff5e8a;filter:drop-shadow(0 0 8px rgba(255,94,138,.65))}
+.drawing.hanged-state .hanged-group{
+  animation:hangDropSwing 1.85s ease-in-out infinite;
+}
+.drawing.saved-state .person.show{stroke:#34d399;filter:drop-shadow(0 0 8px rgba(52,211,153,.65))}
+.drawing.saved-state .hanged-group{
+  animation:rescueBounce .55s ease-in-out infinite alternate;
+}
+.face-dead,.face-happy{opacity:0;transition:opacity .2s}
+.drawing.hanged-state .face-dead{opacity:1}
+.drawing.saved-state .face-happy{opacity:1}
+.status-stamp{
+  position:absolute;top:10px;left:12px;
+  font-family:'Fredoka','Outfit',sans-serif;font-size:13px;font-weight:700;
+  padding:4px 11px;border-radius:99px;opacity:0;transform:scale(.8);transition:all .25s;
+  pointer-events:none;
+}
+.drawing.hanged-state .status-stamp{
+  opacity:1;transform:scale(1);background:rgba(255,94,138,.25);border:1px solid #ff5e8a;color:#ffd0de;
+}
+.drawing.saved-state .status-stamp{
+  opacity:1;transform:scale(1);background:rgba(52,211,153,.25);border:1px solid #34d399;color:#bbf7d0;
+}
+@keyframes hangDropSwing{
+  0%{transform:translateY(0) rotate(0deg)}
+  12%{transform:translateY(9px) rotate(13deg)}
+  34%{transform:translateY(8px) rotate(-11deg)}
+  56%{transform:translateY(8px) rotate(8deg)}
+  78%{transform:translateY(8px) rotate(-6deg)}
+  100%{transform:translateY(8px) rotate(0deg)}
+}
+@keyframes rescueBounce{
+  from{transform:translateY(0)}
+  to{transform:translateY(-8px)}
+}
+.livesline{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}
+.lifeicons{color:var(--red);letter-spacing:3px;font-size:17px}
+.used-box{font-size:12px;color:#c3d4f0;line-height:1.5;min-height:22px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Modals */
+.overlay{
+  position:fixed;inset:0;background:rgba(7,11,28,.88);backdrop-filter:blur(7px);
+  display:flex;align-items:center;justify-content:center;padding:16px;z-index:80;
+}
+.modal{
+  width:min(490px,100%);background:linear-gradient(160deg,#1c295c,#11193b);
+  border:1px solid rgba(34,229,210,.45);border-radius:24px;padding:26px;text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
+}
+.modal h2{font-family:'Fredoka','Outfit',sans-serif;font-size:28px;margin:6px 0 8px;color:var(--gold)}
+.modal p{color:#c7d6f2;line-height:1.55;font-size:14px}
+.modal .btn{margin-top:10px;padding:13px 24px;font-size:15px}
+.modeinfo{font-size:12px;color:var(--cyan)}
+
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr;grid-template-rows:1.2fr .8fr}
+  .panel{padding:10px 12px}
+  .drawing{min-height:110px}
+  .keyboard{grid-template-columns:repeat(9,1fr);gap:4px}
+  .key{padding:6px 0;font-size:12px}
+}
+</style></head>
+<body>
+<main class="app">
+  <header class="hudbar">
+    <div class="brand-mini">
+      <div class="logo">🔤 FINANCE <b>HANGMAN</b></div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+      <div class="stat"><small>Level</small><strong id="level">1 / 5</strong></div>
+      <div class="stat"><small>Streak</small><strong id="streak">0</strong></div>
+      <div class="stat"><small>Diff</small><strong id="difficulty">Easy</strong></div>
+      <div class="stat"><small>Hints</small><strong id="hints">2</strong></div>
+    </div>
+    <div class="hud-controls">
+      <button class="icon-btn" id="musicBtn" title="Mute / Unmute Music & SFX">🎵 Music</button>
+      <button class="icon-btn" id="pauseBtn" title="Pause Game (P / Esc)">⏸ Pause</button>
+      <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">⛶ Full</button>
+    </div>
+  </header>
+
+  <div class="progress"><div id="progress"></div></div>
+
+  <div class="layout">
+    <section class="panel">
+      <div>
+        <div class="panelhead">
+          <span class="eyebrow">Decode The Accounting Term</span>
+          <span class="levelchip" id="mode">DEFINITION MODE</span>
+        </div>
+        <div class="category" id="category">BASIC ACCOUNTING</div>
+        <div class="clue" id="clue">Money invested by the owner into the business.</div>
+      </div>
+
+      <div class="word" id="word"></div>
+
+      <div>
+        <div class="keyboard" id="keyboard"></div>
+        <div class="actions">
+          <button class="btn secondary" id="hintBtn">💡 Hint (−30 pts)</button>
+          <button class="btn secondary" id="skipBtn">⏭ Skip (−50 pts)</button>
+        </div>
+        <div class="feedback" id="feedback">Select a letter or type on your keyboard to begin!</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelhead">
+        <span class="eyebrow">Gallows Status</span>
+        <span class="levelchip" id="attemptText">6 / 6</span>
+      </div>
+
+      <div class="drawing" id="drawingBox">
+        <div class="status-stamp" id="statusStamp">💀 HANGED!</div>
+        <svg viewBox="0 0 300 225" role="img" aria-label="Hangman progress drawing">
+          <!-- Gallows Frame -->
+          <path class="gallows" d="M36 205 H182 M74 205 V20 H190"/>
+          <path class="gallows" d="M74 52 L106 20" stroke-width="5"/>
+          <!-- Animated Hanged Character Group pivoting from rope top (190, 20->46) -->
+          <g class="hanged-group" id="hangedGroup">
+            <line class="rope" x1="190" y1="20" x2="190" y2="50"/>
+            <!-- Noose collar -->
+            <ellipse class="person" id="p0" cx="190" cy="86" rx="7" ry="3" stroke-width="3"/>
+            <!-- Head -->
+            <circle class="person" id="p1" cx="190" cy="68" r="18"/>
+            <!-- Dead Face (X X eyes + dizzy mouth) -->
+            <g class="face-dead" stroke="#ff5e8a" stroke-width="2.6" stroke-linecap="round" fill="none">
+              <path d="M180 62 L186 68 M186 62 L180 68"/>
+              <path d="M194 62 L200 68 M200 62 L194 68"/>
+              <path d="M183 76 Q187 72 190 76 T197 76"/>
+            </g>
+            <!-- Happy Saved Face -->
+            <g class="face-happy" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" fill="none">
+              <circle cx="183" cy="64" r="1.8" fill="#34d399"/>
+              <circle cx="197" cy="64" r="1.8" fill="#34d399"/>
+              <path d="M182 72 Q190 80 198 72"/>
+            </g>
+            <!-- Body & Limbs -->
+            <path class="person" id="p2" d="M190 86 V142"/>
+            <path class="person" id="p3" d="M190 100 L162 124"/>
+            <path class="person" id="p4" d="M190 100 L218 124"/>
+            <path class="person" id="p5" d="M190 142 L166 178"/>
+            <path class="person" id="p6" d="M190 142 L214 178"/>
+          </g>
+        </svg>
+      </div>
+
+      <div>
+        <div class="livesline"><span>Wrong guesses left</span><span class="lifeicons" id="hearts">♥ ♥ ♥ ♥ ♥ ♥</span></div>
+        <div class="panelhead" style="margin-top:6px">
+          <span class="eyebrow">Letters used</span>
+          <span class="levelchip" id="usedCount">0</span>
+        </div>
+        <div class="used-box" id="used">None yet</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- START / END MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div style="font-size:48px;">🔤</div>
+    <h2>Finance Hangman</h2>
+    <p>Decode accounting terms from clues across 5 escalating levels. Save the stickman before he runs out of tries!</p>
+    <p class="modeinfo">Keyboard or on-screen letters · +100/word · +50 no-mistake bonus · 2 hints per level</p>
+    <button class="btn" id="startBtn">🚀 START LEVEL 1</button>
+  </div>
+</div>
+
+<!-- PAUSE MODAL -->
+<div class="overlay" id="pauseOverlay" style="display:none">
+  <div class="modal">
+    <div style="font-size:48px;">⏸️</div>
+    <h2>Game Paused</h2>
+    <p>Take a breather — your progress and streak are safely paused.</p>
+    <button class="btn" id="resumeBtn">▶ Resume Game</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const state = {
+    slug: 'offline',
+    isAdmin: true,
+    isLocked: false,
+    attemptsUsed: 0,
+    maxAttempts: 999,
+    attemptsLeft: 999,
+    bestScore: 0
+  };
+
+  function storageKey() {
+    return 'finplay_offline_best_' + state.slug;
+  }
+
+  function loadBest() {
+    try {
+      const v = Number(localStorage.getItem(storageKey()) || 0);
+      return Number.isFinite(v) && v > 0 ? v : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function saveBest(val) {
+    try {
+      localStorage.setItem(storageKey(), String(val));
+    } catch (_) {}
+  }
+
+  function injectStyles() {
+    if (document.getElementById('finplay-offline-style')) return;
+    const style = document.createElement('style');
+    style.id = 'finplay-offline-style';
+    style.textContent = `
+      .fp-topbar {
+        position: sticky; top: 0; z-index: 900; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        padding: 7px 16px;
+        background: rgba(10, 15, 38, 0.94);
+        border-bottom: 1px solid rgba(139, 172, 255, 0.25);
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        color: #f3f7ff;
+      }
+      .fp-brand { font-weight: 800; font-size: 14px; letter-spacing: 0.02em; color: #22e5d2; }
+      .fp-brand span { color: #ffd147; }
+      .fp-pills { display: flex; align-items: center; gap: 8px; }
+      .fp-pill {
+        padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;
+        border: 1px solid rgba(139, 172, 255, 0.3); background: rgba(21, 30, 68, 0.9);
+      }
+      .fp-pill.gold { color: #ffd147; border-color: rgba(255, 209, 71, 0.45); }
+      .fp-pill.ok { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
+      .fp-confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+      .fp-toast {
+        position: fixed; bottom: 18px; right: 18px; z-index: 980;
+        background: #17214a; border: 1px solid #22e5d2; color: #fff;
+        padding: 10px 16px; border-radius: 13px;
+        font-family: 'Outfit', system-ui, sans-serif; font-weight: 700; font-size: 13px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderBar() {
+    let bar = document.getElementById('finplay-topbar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'finplay-topbar';
+      bar.className = 'fp-topbar';
+      document.body.prepend(bar);
+    }
+    bar.innerHTML = `
+      <div class="fp-brand">🎮 FinPlay <span>Arcade</span> · 🔤 Finance Hangman</div>
+      <div class="fp-pills">
+        <span class="fp-pill ok">⚡ Local Edition</span>
+        <span class="fp-pill gold" id="fpBestPill">⭐ Best: ${state.bestScore.toLocaleString()}</span>
+      </div>
+    `;
+  }
+
+  function toast(msg) {
+    const el = document.createElement('div');
+    el.className = 'fp-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function celebrate() {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'fp-confetti';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const colors = ['#ffd147', '#22e5d2', '#ff5e8a', '#a78bfa', '#34d399'];
+    const parts = Array.from({ length: 70 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -15 - Math.random() * 100,
+      w: 8, h: 5,
+      vx: (Math.random() - 0.5) * 5,
+      vy: 3 + Math.random() * 5,
+      r: Math.random() * 6,
+      vr: (Math.random() - 0.5) * 0.25,
+      c: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    let f = 0;
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      parts.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.c; ctx.fillRect(-4, -2.5, p.w, p.h);
+        ctx.restore();
+      });
+      if (++f < 95) requestAnimationFrame(tick);
+      else canvas.remove();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  window.FinPlayBridge = {
+    async init(slug) {
+      state.slug = slug;
+      state.bestScore = loadBest();
+      injectStyles();
+      renderBar();
+      return true;
+    },
+    async beginAttempt() {
+      return { ok: true, attemptsLeft: 999, bestScore: state.bestScore, isAdmin: true };
+    },
+    async finishAttempt(score) {
+      const s = Math.max(0, Math.round(Number(score) || 0));
+      const isNewBest = s > state.bestScore;
+      if (isNewBest) {
+        state.bestScore = s;
+        saveBest(s);
+        renderBar();
+        if (s > 0) {
+          celebrate();
+          toast('🎉 New Personal Best: ' + s.toLocaleString() + '!');
+        }
+      }
+      return { ok: true, score: s, bestScore: state.bestScore, isNewBest, attemptsLeft: 999, isAdmin: true };
+    },
+    showLockOverlay() {},
+    getState: () => ({ ...state })
+  };
+})();
+</script>
+<script>
+(() => {
+  'use strict';
+
+  // Five distinct procedural arcade soundtracks synthesized via Web Audio API (zero external MP3s).
+  // MIDI note helper -> frequency in Hz
+  function midi(n) {
+    return 440 * Math.pow(2, (n - 69) / 12);
+  }
+
+  const TRACKS = {
+    // 1. Flappy Finance — bright, bouncy C-major flight chiptune
+    flappy: {
+      bpm: 132,
+      leadWave: 'triangle',
+      bassWave: 'sine',
+      leadGain: 0.045,
+      bassGain: 0.04,
+      lead: [72, 76, 79, 84, 79, 76, 74, 79, 77, 81, 84, 81, 79, 76, 74, 0,
+             72, 76, 79, 86, 84, 81, 79, 76, 77, 74, 71, 74, 72, 0, 79, 0],
+      bass: [48, 0, 55, 0, 52, 0, 55, 0, 53, 0, 60, 0, 55, 0, 50, 0,
+             48, 0, 55, 0, 57, 0, 52, 0, 53, 0, 55, 0, 48, 0, 55, 0]
+    },
+    // 2. Finance Hangman — quirky detective mystery groove in A minor
+    hangman: {
+      bpm: 106,
+      leadWave: 'sine',
+      bassWave: 'triangle',
+      leadGain: 0.048,
+      bassGain: 0.042,
+      lead: [69, 0, 72, 76, 75, 0, 72, 0, 71, 0, 74, 76, 72, 0, 69, 0,
+             69, 72, 76, 81, 80, 0, 76, 0, 74, 72, 71, 68, 69, 0, 0, 0],
+      bass: [45, 0, 52, 0, 45, 0, 48, 0, 47, 0, 52, 0, 45, 0, 40, 0,
+             45, 0, 52, 0, 44, 0, 52, 0, 50, 0, 47, 0, 45, 0, 45, 0]
+    },
+    // 3. Finance Blaster — high-energy neon synthwave action pulse in E minor
+    blaster: {
+      bpm: 146,
+      leadWave: 'sawtooth',
+      bassWave: 'square',
+      leadGain: 0.026,
+      bassGain: 0.024,
+      lead: [64, 67, 71, 76, 71, 67, 74, 71, 72, 76, 79, 76, 74, 71, 69, 67,
+             64, 71, 76, 79, 78, 76, 74, 71, 72, 74, 76, 74, 71, 67, 64, 0],
+      bass: [40, 40, 52, 40, 40, 40, 50, 40, 48, 48, 60, 48, 47, 47, 55, 47,
+             40, 40, 52, 40, 43, 43, 55, 43, 48, 48, 50, 50, 47, 47, 40, 0]
+    },
+    // 4. Cash Collector — cheerful adventure platformer chiptune in G major
+    collector: {
+      bpm: 138,
+      leadWave: 'square',
+      bassWave: 'triangle',
+      leadGain: 0.025,
+      bassGain: 0.042,
+      lead: [67, 71, 74, 79, 76, 74, 71, 0, 72, 76, 79, 76, 74, 0, 71, 0,
+             67, 71, 74, 81, 79, 76, 74, 71, 72, 74, 76, 78, 79, 0, 0, 0],
+      bass: [43, 0, 50, 0, 47, 0, 50, 0, 48, 0, 55, 0, 50, 0, 50, 0,
+             43, 0, 50, 0, 52, 0, 47, 0, 48, 0, 50, 0, 43, 0, 50, 0]
+    },
+    // 5. Accounting Crossword — calm, crisp Lo-Fi puzzle synth in F major
+    crossword: {
+      bpm: 94,
+      leadWave: 'sine',
+      bassWave: 'sine',
+      leadGain: 0.044,
+      bassGain: 0.036,
+      lead: [65, 69, 72, 77, 76, 72, 69, 0, 67, 70, 74, 79, 77, 74, 70, 0,
+             69, 72, 76, 81, 79, 76, 72, 0, 70, 74, 72, 69, 65, 0, 0, 0],
+      bass: [41, 0, 48, 0, 45, 0, 48, 0, 43, 0, 50, 0, 46, 0, 50, 0,
+             45, 0, 52, 0, 48, 0, 52, 0, 46, 0, 48, 0, 41, 0, 48, 0]
+    }
+  };
+
+  class ArcadeAudio {
+    constructor(trackName) {
+      this.trackName = TRACKS[trackName] ? trackName : 'flappy';
+      this.ctx = null;
+      this.muted = localStorage.getItem('finplay_muted') === '1';
+      this.playingMusic = false;
+      this.pausedMusic = false;
+      this.step = 0;
+      this.timer = null;
+    }
+
+    ensureCtx() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        this.ctx = new AC();
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return this.ctx;
+    }
+
+    tone(freq, duration = 0.12, wave = 'sine', vol = 0.04, delay = 0) {
+      if (this.muted || !freq) return;
+      const ctx = this.ensureCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      } catch (_) {}
+    }
+
+    startMusic() {
+      this.playingMusic = true;
+      this.pausedMusic = false;
+      this._scheduleLoop();
+    }
+
+    stopMusic() {
+      this.playingMusic = false;
+      this.pausedMusic = false;
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    pauseMusic() {
+      this.pausedMusic = true;
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    resumeMusic() {
+      if (!this.playingMusic) return;
+      this.pausedMusic = false;
+      this._scheduleLoop();
+    }
+
+    _scheduleLoop() {
+      clearInterval(this.timer);
+      if (this.muted || !this.playingMusic || this.pausedMusic) return;
+      const t = TRACKS[this.trackName];
+      const stepMs = Math.round((60000 / t.bpm) / 2); // eighth notes
+      this.ensureCtx();
+      this.timer = setInterval(() => {
+        if (this.muted || !this.playingMusic || this.pausedMusic || document.hidden) return;
+        const i = this.step % t.lead.length;
+        const leadNote = t.lead[i];
+        const bassNote = t.bass[i];
+        if (leadNote) this.tone(midi(leadNote), (stepMs / 1000) * 0.9, t.leadWave, t.leadGain);
+        if (bassNote) this.tone(midi(bassNote), (stepMs / 1000) * 1.1, t.bassWave, t.bassGain);
+        this.step++;
+      }, stepMs);
+    }
+
+    toggleMute() {
+      this.muted = !this.muted;
+      try { localStorage.setItem('finplay_muted', this.muted ? '1' : '0'); } catch (_) {}
+      if (this.muted) {
+        clearInterval(this.timer);
+        this.timer = null;
+      } else {
+        this.ensureCtx();
+        this._scheduleLoop();
+        this.sfx('click');
+      }
+      return this.muted;
+    }
+
+    sfx(kind) {
+      if (this.muted) return;
+      switch (kind) {
+        case 'flap':
+          this.tone(440, 0.05, 'triangle', 0.045);
+          break;
+        case 'jump':
+          this.tone(340, 0.06, 'square', 0.03);
+          this.tone(520, 0.07, 'square', 0.028, 0.04);
+          break;
+        case 'shoot':
+          this.tone(580, 0.05, 'sawtooth', 0.03);
+          this.tone(260, 0.07, 'sawtooth', 0.025, 0.03);
+          break;
+        case 'good':
+          this.tone(660, 0.08, 'triangle', 0.05);
+          this.tone(880, 0.12, 'triangle', 0.05, 0.06);
+          break;
+        case 'levelup':
+          this.tone(523, 0.08, 'triangle', 0.05);
+          this.tone(659, 0.08, 'triangle', 0.05, 0.07);
+          this.tone(784, 0.09, 'triangle', 0.05, 0.14);
+          this.tone(1046, 0.16, 'triangle', 0.055, 0.21);
+          break;
+        case 'bad':
+          this.tone(190, 0.14, 'sawtooth', 0.045);
+          this.tone(140, 0.18, 'sawtooth', 0.04, 0.09);
+          break;
+        case 'hanged':
+          // Dramatic descending cartoon-defeat cadence
+          this.tone(330, 0.18, 'sawtooth', 0.045, 0);
+          this.tone(294, 0.18, 'sawtooth', 0.045, 0.18);
+          this.tone(262, 0.22, 'sawtooth', 0.045, 0.36);
+          this.tone(196, 0.42, 'sawtooth', 0.05, 0.58);
+          break;
+        case 'win':
+          this.tone(523, 0.1, 'triangle', 0.055, 0);
+          this.tone(659, 0.1, 'triangle', 0.055, 0.09);
+          this.tone(784, 0.12, 'triangle', 0.055, 0.18);
+          this.tone(1046, 0.28, 'triangle', 0.06, 0.28);
+          break;
+        default:
+          this.tone(540, 0.05, 'sine', 0.035);
+      }
+    }
+  }
+
+  window.FinPlayAudio = {
+    create: trackName => new ArcadeAudio(trackName)
+  };
+})();
+
+</script>
+<script>
+(()=>{
+'use strict';
+const $ = id => document.getElementById(id);
+const audio = window.FinPlayAudio.create('hangman');
+
+const levelQuestions = [
+ [
+  ['CAPITAL','Money invested by the owner into the business.','BASIC ACCOUNTING','definition'],
+  ['ASSETS','Resources owned or controlled by a business.','BASIC ACCOUNTING','definition'],
+  ['LEDGER','The book where individual accounts are maintained.','BOOKS OF ACCOUNT','definition']
+ ],
+ [
+  ['CREDITORS','People or businesses to whom the business owes money.','CURRENT LIABILITIES','definition'],
+  ['DRAWINGS','Cash or goods taken by the owner for personal use.','OWNER’S EQUITY','definition'],
+  ['DEBTORS','Customers who owe money to the business.','CURRENT ASSETS','definition']
+ ],
+ [
+  ['DEPRECIATION','The gradual allocation of an asset’s depreciable amount over its useful life.','NON-CURRENT ASSETS','definition'],
+  ['ACCRUALS','Expenses incurred but not yet paid, or income earned but not yet received.','YEAR-END ADJUSTMENTS','definition'],
+  ['AMORTISATION','Systematic allocation of an intangible asset’s cost over its useful life.','INTANGIBLE ASSETS','definition']
+ ],
+ [
+  ['RECONCILIATION','The process of comparing two records and explaining differences.','CONTROL PROCEDURES','definition'],
+  ['CONTINGENT LIABILITY','A possible obligation dependent on uncertain future events.','FINANCIAL REPORTING','definition'],
+  ['IMPAIRMENT LOSS','The amount by which an asset’s carrying value exceeds its recoverable amount.','ASSET VALUATION','definition']
+ ],
+ [
+  ['CONSOLIDATED FINANCIAL STATEMENTS','Statements presenting a parent and its subsidiaries as one economic entity.','GROUP ACCOUNTING','category'],
+  ['CASH GENERATING UNIT','The smallest identifiable group of assets generating largely independent cash inflows.','IMPAIRMENT','category'],
+  ['EFFECTIVE INTEREST METHOD','A method used to calculate amortised cost and allocate interest over time.','FINANCIAL INSTRUMENTS','category']
+ ]
+];
+
+let level=1,score=0,streak=0,bestStreak=0,wrong=0,maxWrong=6,answer='',used=new Set(),hintCount=0,locked=false,starting=false,playing=false,paused=false,nextTimer=0;
+
+function difficulty(l){return ['Easy','Moderate','Challenging','Hard','Expert'][Math.min(4,l-1)]}
+function maxAttempts(l){return l<=2?6:l===3?5:4}
+function currentData(l){
+ const options = levelQuestions[l-1];
+ return options[Math.floor(Math.random()*options.length)];
+}
+function updateHud(){
+ $('score').textContent=score;
+ $('level').textContent=level+' / 5';
+ $('streak').textContent=streak;
+ $('difficulty').textContent=difficulty(level);
+ $('hints').textContent=Math.max(0,2-hintCount);
+ $('progress').style.width=((level-1)/5*100)+'%';
+ $('attemptText').textContent=Math.max(0,maxWrong-wrong)+' / '+maxWrong;
+ $('hearts').textContent=Array(Math.max(0,maxWrong-wrong)).fill('♥').join(' ')||'💀';
+ $('usedCount').textContent=used.size+' letters';
+ $('used').textContent=used.size?[...used].sort().join(' · '):'None yet';
+}
+function drawWord(){
+ const el=$('word');el.innerHTML='';
+ for(const ch of answer){
+  const d=document.createElement('div');
+  if(ch===' '){d.className='letter space'}
+  else{d.className='letter'+(used.has(ch)?' revealed':'');d.textContent=used.has(ch)?ch:''}
+  el.appendChild(d);
+ }
+}
+function buildKeyboard(){
+ const k=$('keyboard');k.innerHTML='';
+ 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ch=>{
+  const b=document.createElement('button');
+  b.className='key';b.textContent=ch;b.disabled=used.has(ch)||locked||paused;
+  b.onclick=()=>guess(ch);
+  if(used.has(ch)){if(answer.includes(ch))b.classList.add('good');else b.classList.add('bad')}
+  k.appendChild(b);
+ });
+}
+function revealHangman(forceAll=false){
+ const ratio = forceAll ? 6 : Math.round((wrong / maxWrong) * 6);
+ $('p0').classList.toggle('show', forceAll);
+ for(let i=1;i<=6;i++)$('p'+i).classList.toggle('show', i <= ratio);
+}
+function setFeedback(msg,type=''){
+ const e=$('feedback');e.className='feedback '+type;e.textContent=msg;
+}
+function loadLevel(){
+ clearTimeout(nextTimer);
+ locked=false;wrong=0;used=new Set();hintCount=0;maxWrong=maxAttempts(level);
+ const box=$('drawingBox');
+ box.classList.remove('hanged-state','saved-state');
+ const d=currentData(level);
+ answer=d[0];
+ $('clue').textContent=d[1];
+ $('category').textContent=d[2];
+ $('mode').textContent=d[3]==='category'?'CATEGORY MODE':'DEFINITION MODE';
+ drawWord();buildKeyboard();revealHangman(false);
+ setFeedback('Select a letter. You have '+maxWrong+' wrong guesses on Level '+level+'.');
+ $('hintBtn').disabled=false;$('skipBtn').disabled=false;
+ updateHud();
+}
+function finish(correct){
+ locked=true;buildKeyboard();$('hintBtn').disabled=true;$('skipBtn').disabled=true;
+ const box=$('drawingBox');
+ if(correct){
+  const bonus=wrong===0?50:0;
+  score+=100+bonus;streak++;if(streak>bestStreak)bestStreak=streak;
+  box.classList.add('saved-state');
+  $('statusStamp').textContent='🎉 SAVED!';
+  revealHangman(true);
+  audio.sfx('good');
+  setFeedback('Correct! '+answer+' — +'+(100+bonus)+' points'+(bonus?' (no-mistake bonus!)':''),'good');
+ }else{
+  streak=0;
+  // Reveal full hanged stickman and trigger dramatic pendulum hanging animation!
+  revealHangman(true);
+  box.classList.add('hanged-state');
+  $('statusStamp').textContent='💀 HANGED!';
+  audio.sfx('hanged');
+  // Reveal missing word in prompt feedback
+  setFeedback('Out of attempts — fully hanged! The answer was: '+answer,'bad');
+ }
+ updateHud();
+ scheduleNext(correct ? 1600 : 2700);
+}
+function scheduleNext(ms){
+ clearTimeout(nextTimer);
+ nextTimer=setTimeout(()=>{
+  if(!playing)return;
+  if(paused){scheduleNext(250);return;}
+  if(level>=5){winGame();}else{level++;loadLevel();}
+ }, ms);
+}
+function guess(ch){
+ if(!playing||paused||locked||used.has(ch))return;
+ used.add(ch);
+ if(answer.includes(ch)){
+  audio.sfx('click');
+  drawWord();
+  if([...answer].every(c=>c===' '||used.has(c))){finish(true)}
+  else setFeedback('Good find! Keep going.','good');
+ }else{
+  wrong++;
+  revealHangman(false);
+  if(wrong>=maxWrong){finish(false);}
+  else{audio.sfx('bad');setFeedback('Not in the word! '+(maxWrong-wrong)+' guesses left.','bad');}
+ }
+ buildKeyboard();updateHud();
+}
+function hint(){
+ if(!playing||paused||locked||hintCount>=2)return;
+ const hidden=[...new Set([...answer].filter(c=>/[A-Z]/.test(c)&&!used.has(c)))];
+ if(!hidden.length)return;
+ const ch=hidden[Math.floor(Math.random()*hidden.length)];
+ hintCount++;score=Math.max(0,score-30);used.add(ch);
+ audio.sfx('click');
+ drawWord();buildKeyboard();updateHud();
+ if([...answer].every(c=>c===' '||used.has(c)))finish(true);
+ else setFeedback('Hint revealed: '+ch+' (−30 points)','good');
+ if(hintCount>=2)$('hintBtn').disabled=true;
+}
+function skip(){
+ if(!playing||paused||locked)return;
+ score=Math.max(0,score-50);streak=0;finish(false);
+}
+async function winGame(){
+ playing=false;paused=false;
+ audio.stopMusic();audio.sfx('win');
+ $('progress').style.width='100%';
+ const res = await window.FinPlayBridge.finishAttempt(score);
+ const st = window.FinPlayBridge.getState();
+ const left = res.attemptsLeft ?? st.attemptsLeft;
+ const canAgain = st.isAdmin || left > 0;
+ $('modal').innerHTML='<div style="font-size:48px;">'+(res.isNewBest?'🏆':'🎉')+'</div><h2>'+(res.isNewBest?'New Personal Best!':'All 5 Levels Complete!')+'</h2><p>Final score: <b style="color:#ffd147;font-size:26px;">'+score+'</b><br>Best score: <b>'+(res.bestScore??st.bestScore)+'</b> · Longest streak: <b>'+bestStreak+'</b>'+(st.isAdmin?'':'<br>Tries remaining: <b>'+left+'</b>')+'</p><button class="btn" id="again">'+(canAgain?(st.isAdmin?'PLAY AGAIN':'🚀 PLAY AGAIN ('+left+' LEFT)'):'🕹️ BACK TO ARCADE')+'</button>';
+ $('overlay').style.display='flex';
+ $('again').onclick=()=>{if(!canAgain){location.href='/';return;}startRun();};
+}
+async function startRun(){
+ if(starting)return;
+ starting=true;
+ try{
+  const res = await window.FinPlayBridge.beginAttempt();
+  if(!res.ok)return;
+  level=1;score=0;streak=0;bestStreak=0;playing=true;paused=false;
+  $('overlay').style.display='none';
+  $('pauseOverlay').style.display='none';
+  audio.startMusic();
+  loadLevel();
+ }finally{starting=false;}
+}
+function pauseGame(){
+ if(!playing||paused)return;
+ paused=true;audio.pauseMusic();
+ $('pauseBtn').textContent='▶ Resume';
+ $('pauseOverlay').style.display='flex';
+ buildKeyboard();
+}
+function resumeGame(){
+ if(!playing||!paused)return;
+ paused=false;audio.resumeMusic();
+ $('pauseBtn').textContent='⏸ Pause';
+ $('pauseOverlay').style.display='none';
+ buildKeyboard();
+}
+function syncMusicBtn(){$('musicBtn').textContent=audio.muted?'🔇 Muted':'🎵 Music';}
+syncMusicBtn();
+$('musicBtn').onclick=()=>{audio.toggleMute();syncMusicBtn();};
+$('pauseBtn').onclick=()=>{if(paused)resumeGame();else pauseGame();};
+$('resumeBtn').onclick=resumeGame;
+$('fullscreenBtn').onclick=async()=>{
+ try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(_){}
+};
+document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').textContent=document.fullscreenElement?'✕ Exit':'⛶ Full';});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing&&!paused)pauseGame();});
+$('hintBtn').onclick=hint;$('skipBtn').onclick=skip;$('startBtn').onclick=startRun;
+window.addEventListener('keydown',e=>{
+ if(e.key==='Escape'||((e.key==='p'||e.key==='P')&&e.ctrlKey)){
+  if(playing){e.preventDefault();if(paused)resumeGame();else pauseGame();}
+  return;
+ }
+ if(/^[a-z]$/i.test(e.key)&&playing&&!paused&&$('overlay').style.display==='none')guess(e.key.toUpperCase());
+});
+updateHud();
+window.FinPlayBridge.init('finance-hangman');
+})();
+</script></body></html>

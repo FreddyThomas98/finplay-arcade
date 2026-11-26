@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Accounting Crossword | FinPlay Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{
+  margin:0;padding:0;width:100%;height:100dvh;overflow:hidden;
+  color:#f3f7ff;font-family:'Outfit',system-ui,Segoe UI,Arial,sans-serif;
+  background:#090e24;display:flex;flex-direction:column;
+}
+.app{
+  flex:1;min-height:0;width:100%;
+  display:flex;flex-direction:column;
+  padding:8px 14px 10px;gap:8px;overflow:hidden;
+  background:radial-gradient(circle at 14% 12%,rgba(167,139,250,.22),transparent 38%),
+             radial-gradient(circle at 88% 18%,rgba(34,229,210,.18),transparent 38%),
+             linear-gradient(160deg,#090e24 0%,#141d46 58%,#0b112c 100%);
+}
+.hudbar{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(25,37,84,.94),rgba(16,24,58,.94));
+  border:1px solid rgba(167,139,250,.36);border-radius:16px;padding:7px 14px;
+}
+.logo{font-family:'Fredoka','Outfit',sans-serif;font-weight:700;font-size:21px;letter-spacing:.3px;white-space:nowrap}
+.logo b{color:#a78bfa}
+.hud-stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stat{background:rgba(9,14,36,.68);border:1px solid rgba(139,172,255,.26);border-radius:11px;padding:4px 10px;min-width:66px;text-align:center;line-height:1.15}
+.stat small{display:block;color:#a6b7db;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.stat strong{font-family:'Fredoka','Outfit',sans-serif;font-size:17px;font-variant-numeric:tabular-nums}
+#score{color:#ffd147}
+#time{color:#22e5d2}
+#solved{color:#34d399}
+.hud-controls{display:flex;gap:6px;align-items:center}
+.icon-btn{
+  border:1px solid rgba(139,172,255,.28);border-radius:10px;padding:7px 10px;
+  background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:700;font-size:12px;cursor:pointer;
+}
+.icon-btn:hover{background:rgba(167,139,250,.22);border-color:#a78bfa}
+.timerbar{flex-shrink:0;height:6px;border-radius:20px;background:rgba(255,255,255,.1);overflow:hidden}
+.timerfill{height:100%;width:100%;background:linear-gradient(90deg,#a78bfa,#22e5d2,#ffd147);transition:width .2s}
+
+.layout{
+  flex:1;min-height:0;
+  display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.95fr);gap:12px;overflow:hidden;
+}
+.panel{
+  background:linear-gradient(155deg,rgba(26,39,88,.9),rgba(17,24,58,.9));
+  border:1px solid rgba(139,172,255,.26);border-radius:18px;padding:12px 16px;
+  min-width:0;min-height:0;display:flex;flex-direction:column;
+  box-shadow:0 12px 32px rgba(0,0,0,.32);overflow:hidden;
+}
+.panelhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-shrink:0}
+.eyebrow{font-size:10px;color:#a6b7db;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
+.chip{font-size:10px;font-weight:800;padding:4px 10px;border:1px solid rgba(167,139,250,.4);border-radius:30px;background:rgba(167,139,250,.14);color:#ddd6fe}
+
+/* Centered responsive grid stage */
+.gridwrap{
+  flex:1;min-height:0;display:grid;place-items:center;overflow:hidden;padding:4px;
+}
+.crossword{
+  display:grid;gap:3px;width:max-content;background:#080d22;padding:8px;border-radius:12px;
+  border:1px solid rgba(139,172,255,.24);
+}
+.cell{
+  width:var(--cell-size, 40px);height:var(--cell-size, 40px);
+  position:relative;background:#263774;border:1.5px solid #4c64ad;border-radius:6px;
+}
+.cell.black{background:transparent;border:0}
+.cell input{
+  width:100%;height:100%;border:0;background:transparent;color:#fff;
+  text-align:center;text-transform:uppercase;
+  font-family:'Fredoka','Outfit',sans-serif;font-size:clamp(15px,2.2vw,23px);font-weight:700;padding:0;outline:0;
+}
+.cell:focus-within,.cell.active{background:#c4f9f2;border-color:#22e5d2;box-shadow:0 0 0 2px rgba(34,229,210,.45)}
+.cell:focus-within input,.cell.active input{color:#091830}
+.cell.correct{background:#7ef0c4;border-color:#34d399}
+.cell.correct input{color:#052319}
+.cell.wrong{background:#ff9eb8;border-color:#ff5e8a}
+.cell.wrong input{color:#350816}
+.cell.revealed-ans{background:#fde68a;border-color:#f59e0b}
+.cell.revealed-ans input{color:#451a03}
+.num{position:absolute;top:2px;left:3px;font-size:9px;line-height:1;color:#b8cbef;pointer-events:none;font-weight:800}
+.cell:focus-within .num,.cell.active .num,.cell.correct .num,.cell.wrong .num,.cell.revealed-ans .num{color:#15254a}
+.answer-key{
+  margin:12px 0 8px;text-align:left;max-height:210px;overflow-y:auto;
+  background:rgba(9,14,36,.72);border:1px solid rgba(139,172,255,.26);
+  border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;
+}
+.ak-item{font-size:12px;color:#cbd8f2;display:flex;align-items:center;gap:6px}
+.ak-item b{color:#ffd147;letter-spacing:.03em}
+.ak-item.ok b{color:#34d399}
+.review-bar{
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:75;
+  display:none;align-items:center;gap:10px;
+  background:rgba(16,24,58,.96);border:1.5px solid #ffd147;border-radius:99px;
+  padding:8px 16px;box-shadow:0 12px 32px rgba(0,0,0,.55);font-size:13px;font-weight:700;
+}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;flex-shrink:0}
+.btn{
+  font:inherit;border:0;border-radius:11px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;
+  background:linear-gradient(135deg,#a78bfa,#8b5cf6);color:#fff;
+  box-shadow:0 4px 0 #5d39bf;transition:transform .12s;
+}
+.btn:active:not(:disabled){transform:translateY(2px)}
+.btn.secondary{background:rgba(255,255,255,.1);color:#f3f7ff;border:1px solid rgba(139,172,255,.3);box-shadow:none}
+.btn.secondary:hover:not(:disabled){border-color:#22e5d2;background:rgba(34,229,210,.15)}
+.feedback{
+  min-height:36px;padding:8px 11px;border-radius:10px;background:rgba(9,14,36,.72);
+  color:#c3d4f0;font-size:12px;line-height:1.35;margin-top:8px;border:1px solid transparent;flex-shrink:0;
+}
+.feedback.good{color:#a7f3d0;border-color:rgba(52,211,153,.5);background:rgba(16,185,129,.12)}
+.feedback.bad{color:#fecdd3;border-color:rgba(255,94,138,.5);background:rgba(255,94,138,.12)}
+
+/* Clues fit cleanly with internal scroll only on tiny phones */
+.clues{
+  flex:1;min-height:0;overflow-y:auto;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;
+}
+.cluegroup h3{font-family:'Fredoka','Outfit',sans-serif;font-size:13px;margin:0 0 6px;color:#22e5d2;letter-spacing:.06em}
+.clue{
+  display:flex;gap:7px;align-items:flex-start;padding:7px 9px;margin-bottom:5px;border-radius:10px;
+  background:rgba(9,14,36,.68);border:1px solid transparent;cursor:pointer;font-size:12.5px;line-height:1.35;color:#cbd8f2;
+  transition:all .14s;
+}
+.clue b{color:#ffd147;min-width:18px}
+.clue.selected{border-color:#a78bfa;background:rgba(167,139,250,.22);color:#fff}
+.clue.solved-clue{border-color:rgba(52,211,153,.4);color:#86efac;opacity:.85}
+
+.overlay{
+  position:fixed;inset:0;background:rgba(7,11,28,.9);backdrop-filter:blur(7px);
+  display:flex;align-items:center;justify-content:center;padding:16px;z-index:80;
+}
+.modal{
+  width:min(480px,100%);background:linear-gradient(160deg,#1c295c,#11193b);
+  border:1px solid rgba(167,139,250,.5);border-radius:24px;padding:28px;text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
+}
+.modal h2{font-family:'Fredoka','Outfit',sans-serif;font-size:28px;margin:8px 0;color:#ffd147}
+.modal p{color:#c7d6f2;line-height:1.55;font-size:14px}
+.modal .btn{padding:13px 24px;margin-top:8px;font-size:15px}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;grid-template-rows:1.15fr .85fr}
+  .clues{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .app{padding:6px;gap:6px}.clues{grid-template-columns:1fr}.logo{font-size:18px}
+}
+</style></head><body><main class="app">
+<header class="hudbar">
+  <div class="logo">🧩 ACCOUNTING <b>CROSSWORD</b></div>
+  <div class="hud-stats">
+    <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+    <div class="stat"><small>Time</small><strong id="time">05:00</strong></div>
+    <div class="stat"><small>Words</small><strong id="solved">0 / 10</strong></div>
+    <div class="stat"><small>Accuracy</small><strong id="accuracy">100%</strong></div>
+  </div>
+  <div class="hud-controls">
+    <button class="icon-btn" id="musicBtn" title="Mute / Unmute Music & SFX">🎵 Music</button>
+    <button class="icon-btn" id="pauseBtn" title="Pause Game (Esc)">⏸ Pause</button>
+    <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">⛶ Full</button>
+  </div>
+</header>
+
+<div class="timerbar"><div class="timerfill" id="timerfill"></div></div>
+
+<div class="layout">
+  <section class="panel">
+    <div class="panelhead">
+      <span class="eyebrow">10-Word Easy Accounting Grid</span>
+      <span class="chip" id="puzzleid">Puzzle A / 3</span>
+    </div>
+    <div class="gridwrap" id="gridwrap">
+      <div class="crossword" id="grid"></div>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" id="hint">💡 REVEAL LETTER −30</button>
+      <button class="btn secondary" id="clear">🧹 CLEAR WORD</button>
+    </div>
+    <div class="feedback" id="feedback">Click a clue or square and type — answers check automatically (Green = Right, Red = Wrong)!</div>
+  </section>
+
+  <aside class="panel">
+    <div class="panelhead">
+      <span class="eyebrow">10 Simple Clues</span>
+      <span class="chip">Click any clue to jump</span>
+    </div>
+    <div class="clues">
+      <div class="cluegroup"><h3>ACROSS</h3><div id="across"></div></div>
+      <div class="cluegroup"><h3>DOWN</h3><div id="down"></div></div>
+    </div>
+  </aside>
+</div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div style="font-size:48px;">🧩</div>
+    <h2>Easy Accounting Crossword</h2>
+    <p>Solve <b>10 simple, fun accounting words</b> in 5 minutes! Answers check <b>automatically</b> as soon as you finish a word — Green if right, Red if wrong.</p>
+    <p><b>Scoring:</b> +100 per word · −20 wrong word · −30 letter hint · +2 bonus per second left!</p>
+    <button class="btn" id="start">🚀 START PUZZLE</button>
+  </div>
+</div>
+
+<div class="overlay" id="pauseOverlay" style="display:none">
+  <div class="modal">
+    <div style="font-size:48px;">⏸️</div>
+    <h2>Puzzle Paused</h2>
+    <p>The timer is safely paused while you take a break.</p>
+    <button class="btn" id="resumeBtn">▶ Resume Puzzle</button>
+  </div>
+</div>
+
+<div class="review-bar" id="reviewBar">
+  <span>💡 Green = Your Solved Words · Gold = Revealed Answers</span>
+  <button class="btn" id="backToResultsBtn" style="padding:7px 13px;font-size:12px;">🏁 Back to Results</button>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const state = {
+    slug: 'offline',
+    isAdmin: true,
+    isLocked: false,
+    attemptsUsed: 0,
+    maxAttempts: 999,
+    attemptsLeft: 999,
+    bestScore: 0
+  };
+
+  function storageKey() {
+    return 'finplay_offline_best_' + state.slug;
+  }
+
+  function loadBest() {
+    try {
+      const v = Number(localStorage.getItem(storageKey()) || 0);
+      return Number.isFinite(v) && v > 0 ? v : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function saveBest(val) {
+    try {
+      localStorage.setItem(storageKey(), String(val));
+    } catch (_) {}
+  }
+
+  function injectStyles() {
+    if (document.getElementById('finplay-offline-style')) return;
+    const style = document.createElement('style');
+    style.id = 'finplay-offline-style';
+    style.textContent = `
+      .fp-topbar {
+        position: sticky; top: 0; z-index: 900; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        padding: 7px 16px;
+        background: rgba(10, 15, 38, 0.94);
+        border-bottom: 1px solid rgba(139, 172, 255, 0.25);
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        color: #f3f7ff;
+      }
+      .fp-brand { font-weight: 800; font-size: 14px; letter-spacing: 0.02em; color: #22e5d2; }
+      .fp-brand span { color: #ffd147; }
+      .fp-pills { display: flex; align-items: center; gap: 8px; }
+      .fp-pill {
+        padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;
+        border: 1px solid rgba(139, 172, 255, 0.3); background: rgba(21, 30, 68, 0.9);
+      }
+      .fp-pill.gold { color: #ffd147; border-color: rgba(255, 209, 71, 0.45); }
+      .fp-pill.ok { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
+      .fp-confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+      .fp-toast {
+        position: fixed; bottom: 18px; right: 18px; z-index: 980;
+        background: #17214a; border: 1px solid #22e5d2; color: #fff;
+        padding: 10px 16px; border-radius: 13px;
+        font-family: 'Outfit', system-ui, sans-serif; font-weight: 700; font-size: 13px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderBar() {
+    let bar = document.getElementById('finplay-topbar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'finplay-topbar';
+      bar.className = 'fp-topbar';
+      document.body.prepend(bar);
+    }
+    bar.innerHTML = `
+      <div class="fp-brand">🎮 FinPlay <span>Arcade</span> · 🧩 Accounting Crossword</div>
+      <div class="fp-pills">
+        <span class="fp-pill ok">⚡ Local Edition</span>
+        <span class="fp-pill gold" id="fpBestPill">⭐ Best: ${state.bestScore.toLocaleString()}</span>
+      </div>
+    `;
+  }
+
+  function toast(msg) {
+    const el = document.createElement('div');
+    el.className = 'fp-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function celebrate() {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'fp-confetti';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const colors = ['#ffd147', '#22e5d2', '#ff5e8a', '#a78bfa', '#34d399'];
+    const parts = Array.from({ length: 70 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -15 - Math.random() * 100,
+      w: 8, h: 5,
+      vx: (Math.random() - 0.5) * 5,
+      vy: 3 + Math.random() * 5,
+      r: Math.random() * 6,
+      vr: (Math.random() - 0.5) * 0.25,
+      c: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    let f = 0;
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      parts.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.c; ctx.fillRect(-4, -2.5, p.w, p.h);
+        ctx.restore();
+      });
+      if (++f < 95) requestAnimationFrame(tick);
+      else canvas.remove();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  window.FinPlayBridge = {
+    async init(slug) {
+      state.slug = slug;
+      state.bestScore = loadBest();
+      injectStyles();
+      renderBar();
+      return true;
+    },
+    async beginAttempt() {
+      return { ok: true, attemptsLeft: 999, bestScore: state.bestScore, isAdmin: true };
+    },
+    async finishAttempt(score) {
+      const s = Math.max(0, Math.round(Number(score) || 0));
+      const isNewBest = s > state.bestScore;
+      if (isNewBest) {
+        state.bestScore = s;
+        saveBest(s);
+        renderBar();
+        if (s > 0) {
+          celebrate();
+          toast('🎉 New Personal Best: ' + s.toLocaleString() + '!');
+        }
+      }
+      return { ok: true, score: s, bestScore: state.bestScore, isNewBest, attemptsLeft: 999, isAdmin: true };
+    },
+    showLockOverlay() {},
+    getState: () => ({ ...state })
+  };
+})();
+</script>
+<script>
+(() => {
+  'use strict';
+
+  // Five distinct procedural arcade soundtracks synthesized via Web Audio API (zero external MP3s).
+  // MIDI note helper -> frequency in Hz
+  function midi(n) {
+    return 440 * Math.pow(2, (n - 69) / 12);
+  }
+
+  const TRACKS = {
+    // 1. Flappy Finance — bright, bouncy C-major flight chiptune
+    flappy: {
+      bpm: 132,
+      leadWave: 'triangle',
+      bassWave: 'sine',
+      leadGain: 0.045,
+      bassGain: 0.04,
+      lead: [72, 76, 79, 84, 79, 76, 74, 79, 77, 81, 84, 81, 79, 76, 74, 0,
+             72, 76, 79, 86, 84, 81, 79, 76, 77, 74, 71, 74, 72, 0, 79, 0],
+      bass: [48, 0, 55, 0, 52, 0, 55, 0, 53, 0, 60, 0, 55, 0, 50, 0,
+             48, 0, 55, 0, 57, 0, 52, 0, 53, 0, 55, 0, 48, 0, 55, 0]
+    },
+    // 2. Finance Hangman — quirky detective mystery groove in A minor
+    hangman: {
+      bpm: 106,
+      leadWave: 'sine',
+      bassWave: 'triangle',
+      leadGain: 0.048,
+      bassGain: 0.042,
+      lead: [69, 0, 72, 76, 75, 0, 72, 0, 71, 0, 74, 76, 72, 0, 69, 0,
+             69, 72, 76, 81, 80, 0, 76, 0, 74, 72, 71, 68, 69, 0, 0, 0],
+      bass: [45, 0, 52, 0, 45, 0, 48, 0, 47, 0, 52, 0, 45, 0, 40, 0,
+             45, 0, 52, 0, 44, 0, 52, 0, 50, 0, 47, 0, 45, 0, 45, 0]
+    },
+    // 3. Finance Blaster — high-energy neon synthwave action pulse in E minor
+    blaster: {
+      bpm: 146,
+      leadWave: 'sawtooth',
+      bassWave: 'square',
+      leadGain: 0.026,
+      bassGain: 0.024,
+      lead: [64, 67, 71, 76, 71, 67, 74, 71, 72, 76, 79, 76, 74, 71, 69, 67,
+             64, 71, 76, 79, 78, 76, 74, 71, 72, 74, 76, 74, 71, 67, 64, 0],
+      bass: [40, 40, 52, 40, 40, 40, 50, 40, 48, 48, 60, 48, 47, 47, 55, 47,
+             40, 40, 52, 40, 43, 43, 55, 43, 48, 48, 50, 50, 47, 47, 40, 0]
+    },
+    // 4. Cash Collector — cheerful adventure platformer chiptune in G major
+    collector: {
+      bpm: 138,
+      leadWave: 'square',
+      bassWave: 'triangle',
+      leadGain: 0.025,
+      bassGain: 0.042,
+      lead: [67, 71, 74, 79, 76, 74, 71, 0, 72, 76, 79, 76, 74, 0, 71, 0,
+             67, 71, 74, 81, 79, 76, 74, 71, 72, 74, 76, 78, 79, 0, 0, 0],
+      bass: [43, 0, 50, 0, 47, 0, 50, 0, 48, 0, 55, 0, 50, 0, 50, 0,
+             43, 0, 50, 0, 52, 0, 47, 0, 48, 0, 50, 0, 43, 0, 50, 0]
+    },
+    // 5. Accounting Crossword — calm, crisp Lo-Fi puzzle synth in F major
+    crossword: {
+      bpm: 94,
+      leadWave: 'sine',
+      bassWave: 'sine',
+      leadGain: 0.044,
+      bassGain: 0.036,
+      lead: [65, 69, 72, 77, 76, 72, 69, 0, 67, 70, 74, 79, 77, 74, 70, 0,
+             69, 72, 76, 81, 79, 76, 72, 0, 70, 74, 72, 69, 65, 0, 0, 0],
+      bass: [41, 0, 48, 0, 45, 0, 48, 0, 43, 0, 50, 0, 46, 0, 50, 0,
+             45, 0, 52, 0, 48, 0, 52, 0, 46, 0, 48, 0, 41, 0, 48, 0]
+    }
+  };
+
+  class ArcadeAudio {
+    constructor(trackName) {
+      this.trackName = TRACKS[trackName] ? trackName : 'flappy';
+      this.ctx = null;
+      this.muted = localStorage.getItem('finplay_muted') === '1';
+      this.playingMusic = false;
+      this.pausedMusic = false;
+      this.step = 0;
+      this.timer = null;
+    }
+
+    ensureCtx() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        this.ctx = new AC();
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return this.ctx;
+    }
+
+    tone(freq, duration = 0.12, wave = 'sine', vol = 0.04, delay = 0) {
+      if (this.muted || !freq) return;
+      const ctx = this.ensureCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      } catch (_) {}
+    }
+
+    startMusic() {
+      this.playingMusic = true;
+      this.pausedMusic = false;
+      this._scheduleLoop();
+    }
+
+    stopMusic() {
+      this.playingMusic = false;
+      this.pausedMusic = false;
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    pauseMusic() {
+      this.pausedMusic = true;
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    resumeMusic() {
+      if (!this.playingMusic) return;
+      this.pausedMusic = false;
+      this._scheduleLoop();
+    }
+
+    _scheduleLoop() {
+      clearInterval(this.timer);
+      if (this.muted || !this.playingMusic || this.pausedMusic) return;
+      const t = TRACKS[this.trackName];
+      const stepMs = Math.round((60000 / t.bpm) / 2); // eighth notes
+      this.ensureCtx();
+      this.timer = setInterval(() => {
+        if (this.muted || !this.playingMusic || this.pausedMusic || document.hidden) return;
+        const i = this.step % t.lead.length;
+        const leadNote = t.lead[i];
+        const bassNote = t.bass[i];
+        if (leadNote) this.tone(midi(leadNote), (stepMs / 1000) * 0.9, t.leadWave, t.leadGain);
+        if (bassNote) this.tone(midi(bassNote), (stepMs / 1000) * 1.1, t.bassWave, t.bassGain);
+        this.step++;
+      }, stepMs);
+    }
+
+    toggleMute() {
+      this.muted = !this.muted;
+      try { localStorage.setItem('finplay_muted', this.muted ? '1' : '0'); } catch (_) {}
+      if (this.muted) {
+        clearInterval(this.timer);
+        this.timer = null;
+      } else {
+        this.ensureCtx();
+        this._scheduleLoop();
+        this.sfx('click');
+      }
+      return this.muted;
+    }
+
+    sfx(kind) {
+      if (this.muted) return;
+      switch (kind) {
+        case 'flap':
+          this.tone(440, 0.05, 'triangle', 0.045);
+          break;
+        case 'jump':
+          this.tone(340, 0.06, 'square', 0.03);
+          this.tone(520, 0.07, 'square', 0.028, 0.04);
+          break;
+        case 'shoot':
+          this.tone(580, 0.05, 'sawtooth', 0.03);
+          this.tone(260, 0.07, 'sawtooth', 0.025, 0.03);
+          break;
+        case 'good':
+          this.tone(660, 0.08, 'triangle', 0.05);
+          this.tone(880, 0.12, 'triangle', 0.05, 0.06);
+          break;
+        case 'levelup':
+          this.tone(523, 0.08, 'triangle', 0.05);
+          this.tone(659, 0.08, 'triangle', 0.05, 0.07);
+          this.tone(784, 0.09, 'triangle', 0.05, 0.14);
+          this.tone(1046, 0.16, 'triangle', 0.055, 0.21);
+          break;
+        case 'bad':
+          this.tone(190, 0.14, 'sawtooth', 0.045);
+          this.tone(140, 0.18, 'sawtooth', 0.04, 0.09);
+          break;
+        case 'hanged':
+          // Dramatic descending cartoon-defeat cadence
+          this.tone(330, 0.18, 'sawtooth', 0.045, 0);
+          this.tone(294, 0.18, 'sawtooth', 0.045, 0.18);
+          this.tone(262, 0.22, 'sawtooth', 0.045, 0.36);
+          this.tone(196, 0.42, 'sawtooth', 0.05, 0.58);
+          break;
+        case 'win':
+          this.tone(523, 0.1, 'triangle', 0.055, 0);
+          this.tone(659, 0.1, 'triangle', 0.055, 0.09);
+          this.tone(784, 0.12, 'triangle', 0.055, 0.18);
+          this.tone(1046, 0.28, 'triangle', 0.06, 0.28);
+          break;
+        default:
+          this.tone(540, 0.05, 'sine', 0.035);
+      }
+    }
+  }
+
+  window.FinPlayAudio = {
+    create: trackName => new ArcadeAudio(trackName)
+  };
+})();
+
+</script>
+<script>
+(()=>{
+'use strict';
+// Three mathematically verified, compact 10-word easy accounting crosswords
+const PUZZLES = [
+  {
+    rows: 6, cols: 14,
+    entries: [
+      {word:"CAPITAL",clue:"Money invested by the owner in the business.",r:0,c:1,dir:"A",number:1},
+      {word:"PROFIT",clue:"Money left over when income beats expenses.",r:0,c:3,dir:"D",number:2},
+      {word:"TAX",clue:"Mandatory charge paid to the government.",r:0,c:5,dir:"D",number:3},
+      {word:"LEDGER",clue:"Main book holding all individual accounts.",r:0,c:7,dir:"D",number:4},
+      {word:"ASSET",clue:"Something valuable owned by the business.",r:0,c:9,dir:"D",number:5},
+      {word:"CASH",clue:"Ready money in hand or in the register.",r:0,c:13,dir:"D",number:6},
+      {word:"SALES",clue:"Revenue earned from selling goods to customers.",r:2,c:9,dir:"A",number:7},
+      {word:"LOAN",clue:"Money borrowed that must be repaid later.",r:2,c:11,dir:"D",number:8},
+      {word:"DEBIT",clue:"The left-hand side of an account.",r:4,c:0,dir:"A",number:9},
+      {word:"RENT",clue:"Regular payment made to use a shop or office.",r:4,c:6,dir:"A",number:10}
+    ]
+  },
+  {
+    rows: 7, cols: 12,
+    entries: [
+      {word:"INCOME",clue:"Money earned from business work or services.",r:0,c:6,dir:"A",number:1},
+      {word:"CREDIT",clue:"The right-hand side of an account.",r:0,c:8,dir:"D",number:2},
+      {word:"WAGES",clue:"Pay given to workers for their labor.",r:1,c:3,dir:"D",number:3},
+      {word:"STOCK",clue:"Unsold goods kept in the store for sale.",r:2,c:5,dir:"D",number:4},
+      {word:"BUDGET",clue:"A financial plan for future income and spending.",r:3,c:0,dir:"A",number:5},
+      {word:"BILL",clue:"Written statement showing money owed for goods.",r:3,c:0,dir:"D",number:5},
+      {word:"DEBT",clue:"An amount of money owed to someone else.",r:3,c:8,dir:"A",number:6},
+      {word:"BANK",clue:"Place where business money is safely kept.",r:3,c:10,dir:"D",number:7},
+      {word:"LOSS",clue:"When total expenses are more than income.",r:5,c:0,dir:"A",number:8},
+      {word:"COST",clue:"Amount spent to buy or make an item.",r:5,c:5,dir:"A",number:9}
+    ]
+  },
+  {
+    rows: 11, cols: 10,
+    entries: [
+      {word:"PAY",clue:"To give money in return for goods or work.",r:0,c:1,dir:"A",number:1},
+      {word:"PRICE",clue:"Amount charged to a buyer for a product.",r:0,c:1,dir:"D",number:1},
+      {word:"JOURNAL",clue:"First book where daily transactions are noted.",r:1,c:5,dir:"D",number:2},
+      {word:"GOODS",clue:"Items bought by a trader to sell for profit.",r:2,c:3,dir:"A",number:3},
+      {word:"EQUITY",clue:"The owner's share of value in the business.",r:2,c:9,dir:"D",number:4},
+      {word:"DEBTOR",clue:"A customer who owes money to the business.",r:4,c:0,dir:"A",number:5},
+      {word:"BALANCE",clue:"Difference between total debits and credits.",r:4,c:2,dir:"D",number:6},
+      {word:"AUDIT",clue:"Official check of a company's financial records.",r:6,c:5,dir:"A",number:7},
+      {word:"FEE",clue:"Charge paid for a professional service.",r:8,c:4,dir:"D",number:8},
+      {word:"CHEQUE",clue:"Written order telling a bank to pay money.",r:9,c:2,dir:"A",number:9}
+    ]
+  }
+];
+
+const $ = id => document.getElementById(id);
+const audio = window.FinPlayAudio.create('crossword');
+const puzzleIndex = Math.floor(Math.random() * PUZZLES.length);
+const puzzle = PUZZLES[puzzleIndex];
+const rows = puzzle.rows, cols = puzzle.cols, entries = puzzle.entries;
+
+let score=0,seconds=300,solved=new Set(),wrongChecks=0,lastWrong={},selected=null,activeDir='A',timer=null,ended=false,playing=false,paused=false,inputs={},starting=false;
+$('puzzleid').textContent = 'Puzzle ' + String.fromCharCode(65 + puzzleIndex) + ' / 3';
+
+function key(r,c){return r+','+c}
+function cellCoords(e){const a=[];for(let i=0;i<e.word.length;i++)a.push([e.r+(e.dir==='D'?i:0),e.c+(e.dir==='A'?i:0)]);return a}
+function entryByCell(r,c,dir){return entries.find(e=>e.dir===dir&&cellCoords(e).some(p=>p[0]===r&&p[1]===c))}
+
+function fitGridSize(){
+  const wrap=$('gridwrap');
+  const rect=wrap.getBoundingClientRect();
+  if(rect.width<20||rect.height<20)return;
+  const maxW = Math.floor((rect.width - 28 - (cols - 1) * 3) / cols);
+  const maxH = Math.floor((rect.height - 24 - (rows - 1) * 3) / rows);
+  const sz = Math.max(24, Math.min(54, maxW, maxH));
+  $('grid').style.setProperty('--cell-size', sz + 'px');
+}
+
+function renderGrid(){
+  const el=$('grid');
+  el.style.gridTemplateColumns=`repeat(${cols},var(--cell-size, 40px))`;
+  const used={};entries.forEach(e=>cellCoords(e).forEach(([r,c])=>used[key(r,c)]=true));
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const d=document.createElement('div');
+    d.className='cell'+(used[key(r,c)]?'':' black');
+    d.dataset.r=r;d.dataset.c=c;
+    if(used[key(r,c)]){
+      const starters=entries.filter(e=>e.r===r&&e.c===c);
+      if(starters.length){const n=document.createElement('span');n.className='num';n.textContent=starters[0].number;d.appendChild(n);}
+      const inp=document.createElement('input');
+      inp.maxLength=1;inp.autocomplete='off';inp.spellcheck=false;inp.dataset.r=r;inp.dataset.c=c;
+      inputs[key(r,c)]=inp;
+      inp.addEventListener('input',()=>{
+        if(inp.readOnly)return;
+        inp.value=inp.value.toUpperCase().replace(/[^A-Z]/g,'').slice(-1);
+        inp.parentElement.classList.remove('wrong');
+        if(inp.value){
+          audio.sfx('click');
+          autoCheckCell(r,c);
+          if(!ended)moveNext(r,c);
+        }else{
+          clearWrongForCell(r,c);
+        }
+      });
+      inp.addEventListener('keydown',ev=>{
+        if(ev.key==='Backspace'){
+          if(inp.readOnly||!inp.value){movePrev(r,c);ev.preventDefault();}
+          else{clearWrongForCell(r,c);}
+        }
+        if(ev.key==='ArrowRight'){focusCell(r,c+1);ev.preventDefault()}
+        if(ev.key==='ArrowLeft'){focusCell(r,c-1);ev.preventDefault()}
+        if(ev.key==='ArrowDown'){focusCell(r+1,c);ev.preventDefault()}
+        if(ev.key==='ArrowUp'){focusCell(r-1,c);ev.preventDefault()}
+      });
+      inp.addEventListener('focus',()=>selectCell(r,c));
+      d.appendChild(inp);
+    }
+    el.appendChild(d);
+  }
+  fitGridSize();
+}
+
+function selectCell(r,c){
+  const e=entryByCell(r,c,activeDir)||entryByCell(r,c,activeDir==='A'?'D':'A');
+  if(e){selected=e;activeDir=e.dir;highlight();}
+}
+function highlight(){
+  document.querySelectorAll('.cell').forEach(d=>d.classList.remove('active'));
+  if(!selected)return;
+  cellCoords(selected).forEach(([r,c])=>{const el=inputs[key(r,c)];if(el)el.parentElement.classList.add('active');});
+  document.querySelectorAll('.clue').forEach(d=>{
+    d.classList.toggle('selected',d.dataset.number==selected.number&&d.dataset.dir===selected.dir);
+    d.classList.toggle('solved-clue',solved.has(d.dataset.number+'-'+d.dataset.dir));
+  });
+}
+function focusCell(r,c){const inp=inputs[key(r,c)];if(inp)inp.focus();}
+function moveNext(r,c){
+  if(!selected)return;
+  const coords=cellCoords(selected),i=coords.findIndex(p=>p[0]===r&&p[1]===c);
+  for(let j=i+1;j<coords.length;j++){
+    const nextInp=inputs[key(...coords[j])];
+    if(nextInp&&!nextInp.readOnly){nextInp.focus();return;}
+  }
+  if(i>=0&&i<coords.length-1)focusCell(...coords[i+1]);
+}
+function movePrev(r,c){
+  if(!selected)return;
+  const coords=cellCoords(selected),i=coords.findIndex(p=>p[0]===r&&p[1]===c);
+  for(let j=i-1;j>=0;j--){
+    const prevInp=inputs[key(...coords[j])];
+    if(prevInp&&!prevInp.readOnly){prevInp.focus();return;}
+  }
+  if(i>0)focusCell(...coords[i-1]);
+}
+function renderClues(dir,id){
+  const el=$(id);
+  entries.filter(e=>e.dir===dir).sort((a,b)=>a.number-b.number).forEach(e=>{
+    const d=document.createElement('div');
+    d.className='clue';d.dataset.number=e.number;d.dataset.dir=e.dir;
+    d.innerHTML='<b>'+e.number+'</b><span>'+e.clue+'</span>';
+    d.onclick=()=>{selected=e;activeDir=e.dir;highlight();focusCell(e.r,e.c);};
+    el.appendChild(d);
+  });
+}
+function getAnswer(e){return cellCoords(e).map(([r,c])=>inputs[key(r,c)]?.value||'').join('');}
+function updateHud(){
+  const n=solved.size;
+  $('score').textContent=score;
+  $('solved').textContent=n+' / '+entries.length;
+  $('accuracy').textContent=(wrongChecks+n?Math.round(n/(n+wrongChecks)*100):100)+'%';
+  $('time').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+  $('timerfill').style.width=(seconds/300*100)+'%';
+  $('timerfill').style.background=seconds<60?'#ff5e8a':'linear-gradient(90deg,#a78bfa,#22e5d2,#ffd147)';
+}
+function setFeedback(t,cls=''){$('feedback').className='feedback '+cls;$('feedback').textContent=t;}
+
+function entriesAtCell(r,c){
+  return entries.filter(e=>cellCoords(e).some(p=>p[0]===r&&p[1]===c));
+}
+
+function clearWrongForCell(r,c){
+  entriesAtCell(r,c).forEach(e=>{
+    const id=e.number+'-'+e.dir;
+    if(solved.has(id))return;
+    cellCoords(e).forEach(([rr,cc])=>{
+      const cell=inputs[key(rr,cc)]?.parentElement;
+      if(cell&&!cell.classList.contains('correct'))cell.classList.remove('wrong');
+    });
+  });
+}
+
+function autoCheckCell(r,c){
+  if(!playing||paused||ended)return;
+  const touching=entriesAtCell(r,c);
+  let newlySolved=[];
+  let wrongWords=0;
+
+  touching.forEach(e=>{
+    const id=e.number+'-'+e.dir;
+    if(solved.has(id))return;
+    const ans=getAnswer(e);
+    if(ans.length<e.word.length){
+      cellCoords(e).forEach(([rr,cc])=>{
+        const cell=inputs[key(rr,cc)]?.parentElement;
+        if(cell&&!cell.classList.contains('correct'))cell.classList.remove('wrong');
+      });
+      return;
+    }
+    if(ans===e.word){
+      solved.add(id);
+      delete lastWrong[id];
+      score+=100;
+      newlySolved.push(e.word);
+      cellCoords(e).forEach(([rr,cc])=>{
+        const inp=inputs[key(rr,cc)];
+        inp.readOnly=true;
+        inp.parentElement.classList.remove('wrong');
+        inp.parentElement.classList.add('correct');
+      });
+    }else{
+      cellCoords(e).forEach(([rr,cc])=>{
+        const cell=inputs[key(rr,cc)]?.parentElement;
+        if(cell&&!cell.classList.contains('correct'))cell.classList.add('wrong');
+      });
+      if(lastWrong[id]!==ans){
+        lastWrong[id]=ans;
+        wrongChecks++;
+        wrongWords++;
+        score=Math.max(0,score-20);
+      }
+    }
+  });
+
+  if(newlySolved.length){
+    audio.sfx('good');
+    setFeedback('✅ Correct: '+newlySolved.join(', ')+'! +'+(newlySolved.length*100)+' points.','good');
+  }else if(wrongWords){
+    audio.sfx('bad');
+    setFeedback('❌ Incorrect word (−'+(wrongWords*20)+' pts). Fix the red letters!','bad');
+  }
+  highlight();updateHud();
+  if(solved.size===entries.length)finish(true);
+}
+
+function hint(){
+  if(!playing||paused||ended||!selected)return setFeedback('Select a clue first to reveal a letter.','bad');
+  const coords=cellCoords(selected),idx=coords.findIndex(([r,c])=>!inputs[key(r,c)].value);
+  if(idx<0)return setFeedback('This word has no empty letters.','bad');
+  const [r,c]=coords[idx];
+  inputs[key(r,c)].value=selected.word[idx];
+  inputs[key(r,c)].parentElement.classList.remove('wrong');
+  score=Math.max(0,score-30);
+  audio.sfx('click');
+  setFeedback('Revealed letter '+selected.word[idx]+' (−30 points).','good');
+  updateHud();
+  autoCheckCell(r,c);
+}
+
+function clearWord(){
+  if(!playing||paused||!selected)return;
+  const id=selected.number+'-'+selected.dir;
+  delete lastWrong[id];
+  cellCoords(selected).forEach(([r,c])=>{
+    const inp=inputs[key(r,c)];
+    if(!inp.readOnly&&!inp.parentElement.classList.contains('correct')){
+      inp.value='';
+      inp.parentElement.classList.remove('wrong');
+    }
+  });
+  focusCell(selected.r,selected.c);
+}
+
+function revealAllAnswersOnGrid(){
+  entries.forEach(e=>{
+    const wasSolved = solved.has(e.number+'-'+e.dir);
+    cellCoords(e).forEach(([r,c], idx)=>{
+      const inp = inputs[key(r,c)];
+      if(!inp)return;
+      inp.value = e.word[idx];
+      inp.disabled = true;
+      const cell = inp.parentElement;
+      cell.classList.remove('wrong','active');
+      if(!wasSolved && !cell.classList.contains('correct')){
+        cell.classList.add('revealed-ans');
+      }
+    });
+  });
+  setFeedback('All 10 answers revealed on the grid! (Green = Solved, Gold = Revealed)','good');
+}
+
+async function finish(won){
+  if(ended)return;
+  ended=true;playing=false;paused=false;clearInterval(timer);
+  audio.stopMusic();audio.sfx(won?'win':'bad');
+  let bonus=0;
+  if(won){bonus=seconds*2;score+=bonus;updateHud();}
+  // Automatically reveal all answers on the crossword grid!
+  revealAllAnswersOnGrid();
+  const res = await window.FinPlayBridge.finishAttempt(score);
+  const st = window.FinPlayBridge.getState();
+  const rem = res.attemptsLeft ?? st.attemptsLeft;
+  const canAgain = st.isAdmin || rem > 0;
+  const btnText = canAgain ? (st.isAdmin ? 'PLAY ANOTHER' : `🚀 PLAY ANOTHER PUZZLE (${rem} LEFT)`) : '🕹️ BACK TO ARCADE';
+  const sortedEntries = [...entries].sort((a,b)=>a.number-b.number || (a.dir==='A'?-1:1));
+  const answerKeyHtml = '<div class="answer-key">' + sortedEntries.map(e => {
+    const ok = solved.has(e.number+'-'+e.dir);
+    return '<div class="ak-item'+(ok?' ok':'')+'"><span>'+(ok?'✅':'💡')+'</span><span>'+e.number+(e.dir==='A'?'A':'D')+': <b>'+e.word+'</b></span></div>';
+  }).join('') + '</div>';
+
+  const heading = won
+    ? '<div style="font-size:42px;">🏆</div><h2>Crossword Completed!</h2><p>Awesome job! You solved all '+entries.length+' words · Score: <b style="color:#ffd147;font-size:22px;">'+score+'</b> (Time bonus: +'+bonus+')</p>'
+    : '<div style="font-size:42px;">⏱️</div><h2>Time is up!</h2><p>You solved <b>'+solved.size+' / '+entries.length+'</b> words · Final score: <b style="color:#ffd147;font-size:22px;">'+score+'</b></p>';
+
+  $('modal').style.width = 'min(540px,100%)';
+  $('modal').innerHTML = heading +
+    '<div style="font-size:11px;color:#a6b7db;text-transform:uppercase;letter-spacing:.1em;font-weight:800;margin-top:6px;">All 10 Answers (✅ Solved · 💡 Revealed)</div>' +
+    answerKeyHtml +
+    '<p style="margin:6px 0 8px;font-size:13px;">Best score: <b>'+(res.bestScore??st.bestScore)+'</b>'+(st.isAdmin?'':' · Tries left: <b>'+rem+'</b>')+'</p>' +
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
+      '<button class="btn secondary" id="inspectGridBtn">👀 View Filled Grid</button>' +
+      '<button class="btn" id="nextBtn">'+btnText+'</button>' +
+    '</div>';
+  $('overlay').style.display='flex';
+  $('nextBtn').onclick=()=>{if(!canAgain){location.href='/';return;}location.reload();};
+  $('inspectGridBtn').onclick=()=>{
+    $('overlay').style.display='none';
+    $('reviewBar').style.display='flex';
+  };
+  $('backToResultsBtn').onclick=()=>{
+    $('reviewBar').style.display='none';
+    $('overlay').style.display='flex';
+  };
+}
+
+async function start(){
+  if(starting)return;
+  starting=true;
+  try{
+    const res = await window.FinPlayBridge.beginAttempt();
+    if(!res.ok)return;
+    playing=true;paused=false;
+    $('overlay').style.display='none';
+    audio.startMusic();
+    timer=setInterval(()=>{
+      if(!playing||paused)return;
+      seconds--;updateHud();
+      if(seconds<=0)finish(false);
+    },1000);
+    updateHud();
+    fitGridSize();
+  }finally{starting=false;}
+}
+
+function pauseGame(){
+  if(!playing||paused||ended)return;
+  paused=true;audio.pauseMusic();
+  $('pauseBtn').textContent='▶ Resume';
+  $('pauseOverlay').style.display='flex';
+}
+function resumeGame(){
+  if(!playing||!paused||ended)return;
+  paused=false;audio.resumeMusic();
+  $('pauseBtn').textContent='⏸ Pause';
+  $('pauseOverlay').style.display='none';
+}
+
+function syncMusicBtn(){$('musicBtn').textContent=audio.muted?'🔇 Muted':'🎵 Music';}
+syncMusicBtn();
+$('musicBtn').onclick=()=>{audio.toggleMute();syncMusicBtn();};
+$('pauseBtn').onclick=()=>{if(paused)resumeGame();else pauseGame();};
+$('resumeBtn').onclick=resumeGame;
+$('fullscreenBtn').onclick=async()=>{
+  try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(_){}
+};
+document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').textContent=document.fullscreenElement?'✕ Exit':'⛶ Full';setTimeout(fitGridSize,60);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing&&!paused)pauseGame();});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&playing&&!ended){e.preventDefault();if(paused)resumeGame();else pauseGame();}
+});
+
+$('hint').onclick=hint;$('clear').onclick=clearWord;$('start').onclick=start;
+window.addEventListener('resize',fitGridSize);
+renderGrid();renderClues('A','across');renderClues('D','down');updateHud();
+window.FinPlayBridge.init('accounting-crossword').then(()=>setTimeout(fitGridSize,60));
+})();
+</script></body></html>

@@ -57,8 +57,8 @@ const GAMES = [
     accent: '#a78bfa',
     accent2: '#8b5cf6',
     category: 'Brain Puzzle',
-    description: 'Solve 15 intersecting accounting concepts in a 5-minute puzzle showdown.',
-    rules: '15 words · 5-minute timer · +2 bonus per second left',
+    description: 'Solve 10 fun, easy accounting clues in a 5-minute crossword showdown.',
+    rules: '10 easy words · 5-minute timer · +2 bonus per second left',
     url: '/games/accounting-crossword.html'
   }
 ];

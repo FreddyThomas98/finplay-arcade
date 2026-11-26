@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Cash Collector | FinPlay Arcade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,229 +10,391 @@
   --mint:#34d399;--gold:#ffd147;--cyan:#22e5d2;--coral:#ff5e8a;--ink:#f3f7ff;--muted:#a6b7db
 }
 *{box-sizing:border-box}
-body{
-  margin:0;color:var(--ink);font-family:'Outfit',Segoe UI,Arial,sans-serif;min-height:100vh;
-  background:radial-gradient(circle at 14% 12%,rgba(52,211,153,.22),transparent 36%),
-             radial-gradient(circle at 86% 18%,rgba(255,209,71,.2),transparent 38%),
-             linear-gradient(160deg,#090e24 0%,#141d46 58%,#0b112c 100%)
+html,body{
+  margin:0;padding:0;width:100%;height:100dvh;overflow:hidden;
+  color:var(--ink);font-family:'Outfit',Segoe UI,Arial,sans-serif;
+  background:#090e24;display:flex;flex-direction:column;
+  user-select:none;-webkit-user-select:none;
 }
-.app{max-width:1120px;margin:auto;padding:18px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
-.brand{display:flex;align-items:center;gap:12px}
+.app{
+  flex:1;min-height:0;width:100%;
+  display:flex;flex-direction:column;
+  padding:8px 12px 10px;gap:8px;overflow:hidden;
+  background:radial-gradient(circle at 14% 12%,rgba(52,211,153,.2),transparent 36%),
+             radial-gradient(circle at 86% 18%,rgba(255,209,71,.18),transparent 38%),
+             linear-gradient(160deg,#090e24 0%,#141d46 58%,#0b112c 100%);
+}
+.hudbar{
+  flex-shrink:0;
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;
+  background:linear-gradient(135deg,rgba(25,37,84,.94),rgba(16,24,58,.94));
+  border:1px solid rgba(52,211,153,.35);border-radius:16px;padding:7px 14px;
+}
+.hud-left{display:flex;align-items:center;gap:8px}
 .logo{
-  width:50px;height:50px;border-radius:16px;
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
   background:linear-gradient(135deg,var(--mint),#10b981);color:#042419;
-  display:grid;place-items:center;font-size:26px;font-weight:900;
-  box-shadow:0 8px 24px rgba(52,211,153,.35)
+  display:grid;place-items:center;font-size:21px;font-weight:900;
 }
-h1{font-family:'Fredoka','Outfit',sans-serif;font-size:26px;margin:0}
-.sub{font-size:11px;color:var(--mint);letter-spacing:.1em;margin-top:2px;font-weight:700}
-.stats{display:flex;gap:8px;flex-wrap:wrap}
-.stat{background:rgba(22,33,74,.88);border:1px solid var(--line);border-radius:14px;padding:8px 14px;min-width:84px}
-.stat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
-.stat b{font-family:'Fredoka','Outfit',sans-serif;font-size:20px}
+.stat{background:rgba(9,14,36,.68);border:1px solid var(--line);border-radius:11px;padding:4px 10px;min-width:60px;text-align:center;line-height:1.15}
+.stat small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.stat b{font-family:'Fredoka','Outfit',sans-serif;font-size:17px}
 #score{color:var(--gold)}
 #lives{color:var(--coral)}
 #stage{color:var(--cyan)}
-.objective{
-  background:linear-gradient(135deg,rgba(26,39,88,.92),rgba(17,24,58,.92));
-  border:1px solid rgba(52,211,153,.38);border-radius:18px;padding:14px 18px;
-  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px
-}
-.objective small{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.1em}
-.objective strong{display:block;font-family:'Fredoka','Outfit',sans-serif;font-size:22px;margin-top:2px}
-.target{color:var(--mint)}
-.progress{height:10px;background:rgba(255,255,255,.1);border-radius:9px;overflow:hidden;width:210px;margin-top:4px}
+.mission-center{display:flex;align-items:center;justify-content:center;gap:14px;min-width:0;flex-wrap:wrap}
+.mission-title{text-align:center;line-height:1.15}
+.mission-title small{display:block;font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.mission-title strong{font-family:'Fredoka','Outfit',sans-serif;font-size:20px;color:var(--mint)}
+.prog-wrap{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.progress{height:8px;background:rgba(255,255,255,.12);border-radius:9px;overflow:hidden}
 .progress span{height:100%;display:block;background:linear-gradient(90deg,var(--mint),var(--gold));width:0;transition:width .2s}
-.game{
-  background:linear-gradient(135deg,#243778,#141d46);padding:10px;border-radius:20px;
-  border:1px solid rgba(52,211,153,.35);box-shadow:0 16px 42px rgba(0,0,0,.45)
+.prog-wrap small{font-size:10px;color:var(--muted);font-weight:700;text-align:center}
+.hud-right{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  border:1px solid var(--line);border-radius:10px;padding:7px 10px;
+  background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;
 }
-canvas{width:100%;height:auto;display:block;border-radius:13px;touch-action:none}
-.lower{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-top:12px}
-.panel{background:rgba(22,33,74,.86);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
-.panel h3{font-size:11px;margin:0 0 8px;color:var(--cyan);letter-spacing:.1em}
-.hint{font-size:13px;color:var(--muted);line-height:1.6}
-.hint b{color:#fff}
-.chips{display:flex;gap:7px;flex-wrap:wrap}
-.chip{font-size:12px;font-weight:700;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:20px;padding:6px 11px;color:#dbe7ff}
-.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-button{
-  border:0;border-radius:12px;padding:11px 18px;font-family:inherit;font-weight:800;
-  cursor:pointer;background:linear-gradient(135deg,var(--mint),#10b981);color:#042419;
-  box-shadow:0 4px 0 #0c8a5e;transition:transform .12s
+.icon-btn:hover{background:rgba(52,211,153,.18);border-color:var(--mint)}
+
+.stage{
+  flex:1;min-height:0;width:100%;position:relative;
+  border-radius:18px;overflow:hidden;
+  border:1.5px solid rgba(52,211,153,.38);background:#0f183e;
+  box-shadow:0 16px 42px rgba(0,0,0,.46);
 }
-button:active{transform:translateY(2px)}
-button.alt{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--line);box-shadow:none}
-button.alt:hover{background:rgba(52,211,153,.16);border-color:var(--mint)}
-.mobile{display:none;justify-content:center;gap:12px;margin-top:10px}
-.mobile button{width:76px;height:54px;background:rgba(255,255,255,.12);color:#fff;border:1px solid var(--line);font-size:22px;box-shadow:none}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+.touch-controls{
+  display:none;position:absolute;bottom:14px;left:14px;right:14px;
+  justify-content:space-between;align-items:center;pointer-events:none;
+}
+.touch-group{display:flex;gap:10px;pointer-events:auto}
+.touch-controls button{
+  width:62px;height:54px;border-radius:16px;border:1.5px solid rgba(255,255,255,.35);
+  background:rgba(9,14,36,.68);color:#fff;font-size:22px;font-weight:800;cursor:pointer;
+}
 .overlay{
   position:fixed;inset:0;background:rgba(7,11,28,.88);backdrop-filter:blur(7px);
-  display:grid;place-items:center;padding:16px;z-index:50
+  display:grid;place-items:center;padding:16px;z-index:80;
 }
 .modal{
   max-width:490px;width:100%;background:linear-gradient(160deg,#1c295c,#11193b);
   border:1px solid rgba(52,211,153,.48);border-radius:24px;padding:28px;text-align:center;
-  box-shadow:0 24px 70px rgba(0,0,0,.6)
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
 }
 .modal .emoji{font-size:48px}
-.modal h2{font-family:'Fredoka','Outfit',sans-serif;margin:8px 0 8px;font-size:28px;color:var(--gold)}
+.modal h2{font-family:'Fredoka','Outfit',sans-serif;margin:8px 0;font-size:28px;color:var(--gold)}
 .modal p{font-size:14px;line-height:1.55;color:#c7d6f2}
-.modal button{margin-top:10px;min-width:170px;font-size:15px}
-@media(max-width:700px){.app{padding:9px}.lower{grid-template-columns:1fr}.mobile{display:flex}.stat{min-width:68px;padding:7px 9px}.stat b{font-size:16px}.progress{width:130px}}
+.primary-btn{
+  border:0;border-radius:12px;padding:13px 24px;font-family:inherit;font-weight:800;font-size:15px;
+  cursor:pointer;background:linear-gradient(135deg,var(--mint),#10b981);color:#042419;
+  box-shadow:0 4px 0 #0c8a5e;margin-top:10px;min-width:180px;
+}
+.primary-btn:active{transform:translateY(2px)}
+@media(max-width:900px){
+  .hudbar{grid-template-columns:1fr auto;gap:6px;padding:6px 10px}
+  .mission-center{grid-column:1/-1;order:-1;border-bottom:1px solid rgba(139,172,255,.15);padding-bottom:5px}
+  .logo{display:none}
+  .touch-controls{display:flex}
+}
+@media(hover:none) and (pointer:coarse){.touch-controls{display:flex}}
 </style></head><body>
 <div class="app">
-<header class="top"><div class="brand"><div class="logo">🪙</div><div><h1>Cash Collector</h1><div class="sub">FINPLAY ARCADE · ACCOUNTING PLATFORM GAME</div></div></div>
-<div class="stats"><div class="stat"><small>Score</small><b id="score">0</b></div><div class="stat"><small>Time</small><b id="time">60s</b></div><div class="stat"><small>Lives</small><b id="lives">♥ ♥ ♥</b></div><div class="stat"><small>Stage</small><b id="stage">1 / 4</b></div></div></header>
-<section class="objective"><div><small>YOUR STAGE MISSION · COLLECT ONLY</small><strong class="target" id="target">ASSETS</strong><div class="hint" id="mission">Identify and collect items that are assets.</div></div><div><small>COLLECTION PROGRESS</small><div class="progress"><span id="bar"></span></div><div class="hint" id="progressText">0 / 5 correct items</div></div></section>
-<div class="game"><canvas id="game" width="960" height="510"></canvas></div>
-<div class="mobile"><button id="left">◀</button><button id="jump">▲</button><button id="right">▶</button></div>
-<div class="lower"><section class="panel"><h3>GAME RULES</h3><div class="chips"><span class="chip">Correct item: +100</span><span class="chip">Wrong item: −50</span><span class="chip">Time bonus: +10 per second left</span><span class="chip">Wrong item also costs a life</span></div></section>
-<section class="panel"><h3>CONTROLS</h3><div class="hint">Move: <b>← →</b> or <b>A / D</b> · Jump: <b>Space</b>, <b>↑</b> or <b>W</b><br>Every collectible uses the same appearance. Read its name and decide whether it belongs to the stage's target category.</div><div class="actions"><button class="alt" id="restart">Restart (Uses 1 Try)</button><button class="alt" id="sound">Sound: Off</button></div></section></div>
+  <header class="hudbar">
+    <div class="hud-left">
+      <div class="logo">🪙</div>
+      <div class="stat"><small>Score</small><b id="score">0</b></div>
+      <div class="stat"><small>Time</small><b id="time">60s</b></div>
+      <div class="stat"><small>Lives</small><b id="lives">♥ ♥ ♥</b></div>
+      <div class="stat"><small>Stage</small><b id="stage">1 / 4</b></div>
+    </div>
+
+    <div class="mission-center">
+      <div class="mission-title">
+        <small>Collect Only</small>
+        <strong id="target">ASSETS</strong>
+      </div>
+      <div class="prog-wrap">
+        <div class="progress"><span id="bar"></span></div>
+        <small id="progressText">0 / 5 items</small>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <button class="icon-btn" id="musicBtn" title="Mute / Unmute Music & SFX">🎵 Music</button>
+      <button class="icon-btn" id="pauseBtn" title="Pause Game (P / Esc)">⏸ Pause</button>
+      <button class="icon-btn" id="restart" title="Restart (uses 1 try)">↻ Restart</button>
+      <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">⛶ Full</button>
+    </div>
+  </header>
+
+  <div class="stage" id="stageWrap">
+    <canvas id="game"></canvas>
+    <div class="touch-controls">
+      <div class="touch-group"><button id="left">◀</button><button id="right">▶</button></div>
+      <div class="touch-group"><button id="jump">▲</button></div>
+    </div>
+  </div>
 </div>
-<div class="overlay" id="intro"><div class="modal"><div class="emoji">🪙</div><h2>Cash Collector</h2><p>Each stage gives you one accounting mission. Collect <b>only</b> items that belong to the displayed category. Item labels are visible, but their appearance is deliberately identical—use your accounting knowledge!</p><p><b>4 stages · 60 seconds per stage · 3 lives</b><br>Finish quickly to earn a bigger time bonus.</p><button id="start">🚀 Start Game</button></div></div>
-<div class="overlay" id="message" style="display:none"><div class="modal"><div class="emoji" id="msgEmoji">🏁</div><h2 id="msgTitle">Stage complete!</h2><p id="msgText"></p><button id="continue">Continue</button></div></div>
+
+<div class="overlay" id="intro"><div class="modal"><div class="emoji">🪙</div><h2>Cash Collector</h2><p>Each stage gives you one accounting mission. Collect <b>only</b> items belonging to the target category, dodge spikes, and reach the finish flag!</p><p><b>Controls:</b> ← → or A / D to move · Space / ↑ / W to jump<br><b>4 stages · 60s each · 3 lives · +10 time bonus/sec</b></p><button class="primary-btn" id="start">🚀 Start Game</button></div></div>
+
+<div class="overlay" id="pauseOverlay" style="display:none"><div class="modal"><div class="emoji">⏸️</div><h2>Game Paused</h2><p>The stage timer and hazards are paused safely.</p><button class="primary-btn" id="resumeBtn">▶ Resume Game</button></div></div>
+
+<div class="overlay" id="message" style="display:none"><div class="modal"><div class="emoji" id="msgEmoji">🏁</div><h2 id="msgTitle">Stage complete!</h2><p id="msgText"></p><button class="primary-btn" id="continue">Continue</button></div></div>
+
 <script src="/js/game-bridge.js"></script>
+<script src="/js/arcade-audio.js"></script>
 <script>
 (()=>{
-const c=document.getElementById('game'),ctx=c.getContext('2d'),$=id=>document.getElementById(id);
-const W=960,H=510,world=2260,gravity=.62,stageTime=60,required=5;
+'use strict';
+const c=document.getElementById('game'),stageWrap=document.getElementById('stageWrap'),ctx=c.getContext('2d'),$=id=>document.getElementById(id);
+const audio = window.FinPlayAudio.create('collector');
+
+const H=520,world=2260,gravity=.62,stageTime=60,required=5;
+let W=1040;
+
 const missions=[
  {category:'ASSETS',desc:'Collect resources owned or controlled by the business.',items:[['Cash','asset'],['Furniture','asset'],['Machinery','asset'],['Inventory','asset'],['Building','asset'],['Bank Loan','other'],['Rent','other'],['Sales Revenue','other'],['Creditors','other'],['Electricity Expense','other']]},
- {category:'INCOME',desc:'Collect earnings generated by business activities or other sources.',items:[['Sales Revenue','income'],['Commission Received','income'],['Interest Received','income'],['Service Revenue','income'],['Discount Received','income'],['Office Furniture','other'],['Bank Loan','other'],['Salaries','other'],['Creditors','other'],['Inventory','other']]},
+ {category:'INCOME',desc:'Collect earnings generated by business activities.',items:[['Sales Revenue','income'],['Commission Received','income'],['Interest Received','income'],['Service Revenue','income'],['Discount Received','income'],['Office Furniture','other'],['Bank Loan','other'],['Salaries','other'],['Creditors','other'],['Inventory','other']]},
  {category:'LIABILITIES',desc:'Collect amounts the business owes to others.',items:[['Bank Loan','liability'],['Creditors','liability'],['Outstanding Salaries','liability'],['Bank Overdraft','liability'],['Bills Payable','liability'],['Cash','other'],['Sales','other'],['Furniture','other'],['Rent Expense','other'],['Commission Received','other']]},
  {category:'EXPENSES',desc:'Collect costs incurred to operate the business.',items:[['Rent Expense','expense'],['Salaries Expense','expense'],['Electricity Expense','expense'],['Insurance Expense','expense'],['Advertising Expense','expense'],['Cash','other'],['Bank Loan','other'],['Sales Revenue','other'],['Furniture','other'],['Creditors','other']]}
 ];
-let stage=0,score=0,lives=3,correct=0,timeLeft=60,elapsed=0,cam=0,playing=false,frame=0,keys={},platforms=[],tokens=[],hazards=[],player,goal,raf,timerId,sound=false,audio,invulnerable=0,starting=false,runEnded=false,lastWon=false;
-function beep(f=550,d=.07){if(!sound)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();let o=audio.createOscillator(),g=audio.createGain();o.frequency.value=f;o.connect(g);g.connect(audio.destination);g.gain.value=.045;o.start();o.stop(audio.currentTime+d)}catch(e){}}
-const basePlatforms=[[0,462,410,48],[455,462,430,48],[925,462,420,48],[1390,462,420,48],[1850,462,410,48],[180,375,150,16],[440,350,150,16],[710,390,150,16],[990,350,150,16],[1260,385,150,16],[1530,345,150,16],[1780,380,150,16],[2050,345,145,16],[65,290,125,16],[350,275,125,16],[650,285,125,16],[920,270,125,16],[1190,275,125,16],[1460,260,125,16],[1730,275,125,16],[2010,260,125,16]];
-function updateHUD(){$('score').textContent=score.toLocaleString();$('lives').textContent='♥ '.repeat(Math.max(0,lives)).trim()||'—';$('stage').textContent=(stage+1)+' / 4';$('time').textContent=timeLeft+'s';$('target').textContent=missions[stage].category;$('mission').textContent=missions[stage].desc+' Collect '+required+' correct items, then reach the finish flag.';$('progressText').textContent=correct+' / '+required+' correct items';$('bar').style.width=Math.min(100,correct/required*100)+'%';$('time').style.color=timeLeft<=10?'#ff5e8a':'#22e5d2'}
-function setupStage(){clearInterval(timerId);cancelAnimationFrame(raf);frame=0;elapsed=0;timeLeft=stageTime;correct=0;cam=0;invulnerable=0;
-player={x:40,y:400,vx:0,vy:0,w:30,h:42,on:false};platforms=basePlatforms.map(x=>[...x]);tokens=[];hazards=[];
-let pool=missions[stage].items.slice().sort(()=>Math.random()-.5);
-for(let i=0;i<10;i++){let x=150+i*202+Math.random()*35,pl=platforms[(i*3+2)%platforms.length];let y=Math.max(205,Math.min(pl[1]-38,pl[1]-45-Math.random()*24));tokens.push({x,y,label:pool[i][0],kind:pool[i][1],taken:false,bob:Math.random()*6})}
-for(let i=0;i<3+stage;i++){let x=350+i*(1700/(3+stage));hazards.push({x,y:425,w:34,h:36,v:.8+stage*.17,min:x-65,max:x+65})}
-goal={x:2175,y:390};updateHUD();draw()}
-function draw(){
-ctx.clearRect(0,0,W,H);
-let grad=ctx.createLinearGradient(0,0,0,H);
-grad.addColorStop(0,'#131e4d');grad.addColorStop(.55,'#23357a');grad.addColorStop(1,'#382e78');
-ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
-// Clouds
-ctx.fillStyle='rgba(167,196,255,.16)';
-for(let i=0;i<8;i++){let x=((i*175-cam*.16)%(W+120)+W+120)%(W+120)-50;ctx.beginPath();ctx.arc(x,75+i%3*35,23,0,7);ctx.arc(x+27,70+i%3*35,29,0,7);ctx.arc(x+53,78+i%3*35,20,0,7);ctx.fill()}
-// Hills
-ctx.fillStyle='#1d4d6b';ctx.beginPath();ctx.moveTo(0,440);for(let x=0;x<=W;x+=70)ctx.lineTo(x,400+Math.sin((x+cam*.2)/90)*19);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
-ctx.save();ctx.translate(-cam,0);
-platforms.forEach(p=>{
-  ctx.fillStyle='#2a3975';ctx.fillRect(...p);
-  ctx.fillStyle='#34d399';ctx.fillRect(p[0],p[1],p[2],7);
-  ctx.fillStyle='rgba(167,196,255,.22)';for(let x=p[0]+9;x<p[0]+p[2]-14;x+=30)ctx.fillRect(x,p[1]+14,15,4);
-});
-tokens.forEach(t=>{
-  if(t.taken)return;
-  let y=t.y+Math.sin(frame*.07+t.bob)*4;
-  ctx.shadowColor='rgba(255,209,71,.5)';ctx.shadowBlur=10;
-  ctx.fillStyle='#ffd147';ctx.strokeStyle='#fff';ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(t.x,y,15,0,7);ctx.fill();ctx.stroke();
-  ctx.shadowBlur=0;
-  ctx.fillStyle='#1b2550';ctx.font='bold 11px Outfit,Arial';ctx.textAlign='center';ctx.fillText('?',t.x,y+4);
-  // Label pill for crisp readability
-  ctx.font='bold 11px Outfit,Arial';
-  const tw=ctx.measureText(t.label).width+12;
-  ctx.fillStyle='rgba(9,14,36,.84)';
-  ctx.beginPath();ctx.roundRect(t.x-tw/2,y-36,tw,18,6);ctx.fill();
-  ctx.fillStyle='#f3f7ff';ctx.fillText(t.label,t.x,y-23);
-});
-hazards.forEach(h=>{
-  ctx.fillStyle='#ff5e8a';ctx.beginPath();ctx.moveTo(h.x,h.y+h.h);ctx.lineTo(h.x+8,h.y+7);ctx.lineTo(h.x+17,h.y+18);ctx.lineTo(h.x+27,h.y+5);ctx.lineTo(h.x+h.w,h.y+h.h);ctx.fill();
-  ctx.fillStyle='white';ctx.font='bold 15px Outfit,Arial';ctx.textAlign='center';ctx.fillText('!',h.x+17,h.y+29);
-});
-ctx.fillStyle='#cbd5e1';ctx.fillRect(goal.x,goal.y-72,6,72);
-ctx.fillStyle=correct>=required?'#34d399':'#ffd147';
-ctx.beginPath();ctx.moveTo(goal.x+6,goal.y-70);ctx.lineTo(goal.x+64,goal.y-53);ctx.lineTo(goal.x+6,goal.y-35);ctx.fill();
-ctx.fillStyle='#f3f7ff';ctx.font='bold 11px Outfit,Arial';ctx.textAlign='center';ctx.fillText(correct>=required?'FINISH OPEN!':'COLLECT '+required,goal.x+30,goal.y-80);
-let p=player;
-ctx.fillStyle='#192859';ctx.fillRect(p.x,p.y+10,p.w,p.h-10);
-ctx.fillStyle='#ffd1a8';ctx.beginPath();ctx.arc(p.x+15,p.y+9,12,0,7);ctx.fill();
-ctx.fillStyle='#22e5d2';ctx.fillRect(p.x+4,p.y+21,22,17);
-ctx.fillStyle='#111';ctx.fillRect(p.x+19,p.y+5,4,4);
-ctx.fillStyle='#ffd147';ctx.fillRect(p.x+3,p.y+38,10,4);ctx.fillRect(p.x+19,p.y+38,10,4);
-if(invulnerable>0){ctx.strokeStyle='#ffd147';ctx.lineWidth=3;ctx.strokeRect(p.x-4,p.y-4,p.w+8,p.h+8)}
-ctx.restore();
-ctx.fillStyle='#ffd147';ctx.font='bold 14px Outfit,Arial';ctx.textAlign='left';ctx.fillText('STAGE '+(stage+1)+' · '+missions[stage].category,17,24);
+const basePlatforms=[[0,468,410,52],[455,468,430,52],[925,468,420,52],[1390,468,420,52],[1850,468,410,52],[180,380,150,16],[440,355,150,16],[710,395,150,16],[990,355,150,16],[1260,390,150,16],[1530,350,150,16],[1780,385,150,16],[2050,350,145,16],[65,295,125,16],[350,280,125,16],[650,290,125,16],[920,275,125,16],[1190,280,125,16],[1460,265,125,16],[1730,280,125,16],[2010,265,125,16]];
+
+let stage=0,score=0,lives=3,correct=0,timeLeft=60,cam=0,playing=false,paused=false,frame=0,keys={},platforms=[],tokens=[],hazards=[],player,goal,raf,timerId,invulnerable=0,starting=false,runEnded=false,lastWon=false;
+
+function resizeCanvas(){
+  const r=stageWrap.getBoundingClientRect();
+  if(r.width<10||r.height<10)return;
+  W=Math.round(Math.max(820,Math.min(1440,H*(r.width/r.height))));
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
 }
-function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-function loseLife(){if(invulnerable>0)return;lives--;invulnerable=95;player.vy=-6;beep(160,.15);updateHUD();if(lives<=0)endGame(false,'You ran out of lives. Review the item names and try again.')}
-function collect(t){t.taken=true;if(t.kind===missions[stage].category.toLowerCase().replace(/s$/,'') || (stage===0&&t.kind==='asset') || (stage===1&&t.kind==='income') || (stage===2&&t.kind==='liability') || (stage===3&&t.kind==='expense')){score+=100;correct++;beep(760);}else{score=Math.max(0,score-50);loseLife();beep(180)}updateHUD()}
-function tick(){if(!playing)return;frame++;let p=player,speed=3.4+stage*.22;p.vx=((keys.ArrowRight||keys.d)?speed:0)-((keys.ArrowLeft||keys.a)?speed:0);p.x=Math.max(0,Math.min(world-p.w,p.x+p.vx));p.vy+=gravity;let oldY=p.y;p.y+=p.vy;p.on=false;
-platforms.forEach(pl=>{if(p.vy>=0&&p.x+p.w>pl[0]&&p.x<pl[0]+pl[2]&&p.y+p.h>=pl[1]&&oldY+p.h<=pl[1]+5){p.y=pl[1]-p.h;p.vy=0;p.on=true}});
-if(p.y>H+70){loseLife();p.y=330;p.x=Math.max(0,p.x-80)}
-tokens.forEach(t=>{if(!t.taken&&overlap(p,{x:t.x-15,y:t.y-15,w:30,h:30}))collect(t)});
-hazards.forEach(h=>{h.x+=h.v;if(h.x<h.min||h.x>h.max)h.v*=-1;if(overlap(p,h))loseLife()});
-if(invulnerable>0)invulnerable--;cam=Math.max(0,Math.min(world-W,p.x-W*.38));if(overlap(p,{x:goal.x-5,y:goal.y-75,w:70,h:78})){if(correct>=required){let bonus=timeLeft*10;score+=bonus;endGame(true,`You reached the finish point after collecting the required items! Time bonus: ${timeLeft} × 10 = ${bonus} points.`)}else if(frame%45===0){beep(230,.05)}}
-draw();if(playing)raf=requestAnimationFrame(tick)}
-function jump(){if(playing&&player.on){player.vy=-12.4;player.on=false;beep(360,.05)}}
-function startStage(){ $('message').style.display='none';setupStage();playing=true;timerId=setInterval(()=>{if(!playing)return;timeLeft--;updateHUD();if(timeLeft<=0)endGame(false,'Time is up! You did not collect enough correct items.');},1000);tick()}
-async function endGame(won,text){
- if(!playing)return;
- playing=false;clearInterval(timerId);cancelAnimationFrame(raf);
- lastWon=won;
- const isFinalEnd = (won && stage===3) || lives<=0;
- runEnded = isFinalEnd;
- let extra='';
- if(isFinalEnd){
-  const res = await window.FinPlayBridge.finishAttempt(score);
-  const st = window.FinPlayBridge.getState();
-  const rem = res.attemptsLeft ?? st.attemptsLeft;
-  extra = ` Best score: ${(res.bestScore??st.bestScore).toLocaleString()}.` + (st.isAdmin?'':` Tries left: ${rem}.`);
-  $('msgEmoji').textContent = (won && stage===3) || res.isNewBest ? '🏆' : '🏁';
-  $('msgTitle').textContent = won ? 'Finance Champion!' : 'Game Over';
-  if(!st.isAdmin && rem<=0){
-    $('continue').textContent='🕹️ Back to Arcade Hub';
-  }else{
-    $('continue').textContent=st.isAdmin?'Play Again (Preview)':`🚀 Play Again (${rem} left)`;
+
+function updateHUD(){
+  $('score').textContent=score.toLocaleString();
+  $('lives').textContent='♥ '.repeat(Math.max(0,lives)).trim()||'—';
+  $('stage').textContent=(stage+1)+' / 4';
+  $('time').textContent=timeLeft+'s';
+  $('target').textContent=missions[stage].category;
+  $('progressText').textContent=correct+' / '+required+' correct';
+  $('bar').style.width=Math.min(100,correct/required*100)+'%';
+  $('time').style.color=timeLeft<=10?'#ff5e8a':'#22e5d2';
+}
+
+function setupStage(){
+  clearInterval(timerId);cancelAnimationFrame(raf);
+  frame=0;timeLeft=stageTime;correct=0;cam=0;invulnerable=0;
+  player={x:40,y:400,vx:0,vy:0,w:30,h:42,on:false};
+  platforms=basePlatforms.map(x=>[...x]);tokens=[];hazards=[];
+  const pool=missions[stage].items.slice().sort(()=>Math.random()-.5);
+  for(let i=0;i<10;i++){
+    const x=150+i*202+Math.random()*35,pl=platforms[(i*3+2)%platforms.length];
+    const y=Math.max(205,Math.min(pl[1]-38,pl[1]-45-Math.random()*24));
+    tokens.push({x,y,label:pool[i][0],kind:pool[i][1],taken:false,bob:Math.random()*6});
   }
- }else{
-  $('msgEmoji').textContent=won?'🏁':'⏱️';
-  $('msgTitle').textContent=won?'Stage '+(stage+1)+' complete!':'Stage failed';
-  $('continue').textContent=won?'Next stage →':'Retry stage';
- }
- $('msgText').textContent=text+` Current score: ${score.toLocaleString()}. Correct items: ${correct}/${required}.`+extra;
- $('message').style.display='grid';
+  for(let i=0;i<3+stage;i++){
+    const x=350+i*(1700/(3+stage));
+    hazards.push({x,y:431,w:34,h:36,v:.8+stage*.17,min:x-65,max:x+65});
+  }
+  goal={x:2175,y:396};
+  updateHUD();draw();
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#111b48');grad.addColorStop(.55,'#213478');grad.addColorStop(1,'#352c74');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(167,196,255,.15)';
+  for(let i=0;i<9;i++){
+    const x=((i*190-cam*.16)%(W+140)+W+140)%(W+140)-60;
+    ctx.beginPath();ctx.arc(x,75+i%3*36,23,0,7);ctx.arc(x+27,70+i%3*36,29,0,7);ctx.arc(x+53,78+i%3*36,20,0,7);ctx.fill();
+  }
+  ctx.fillStyle='#1b4a69';ctx.beginPath();ctx.moveTo(0,446);
+  for(let x=0;x<=W+70;x+=70)ctx.lineTo(x,406+Math.sin((x+cam*.2)/90)*19);
+  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+
+  ctx.save();ctx.translate(-cam,0);
+  platforms.forEach(p=>{
+    ctx.fillStyle='#2a3975';ctx.fillRect(...p);
+    ctx.fillStyle='#34d399';ctx.fillRect(p[0],p[1],p[2],7);
+    ctx.fillStyle='rgba(167,196,255,.22)';for(let x=p[0]+9;x<p[0]+p[2]-14;x+=30)ctx.fillRect(x,p[1]+14,15,4);
+  });
+  tokens.forEach(t=>{
+    if(t.taken)return;
+    const y=t.y+Math.sin(frame*.07+t.bob)*4;
+    ctx.shadowColor='rgba(255,209,71,.5)';ctx.shadowBlur=10;
+    ctx.fillStyle='#ffd147';ctx.strokeStyle='#fff';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(t.x,y,15,0,7);ctx.fill();ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#1b2550';ctx.font='bold 11px Outfit,Arial';ctx.textAlign='center';ctx.fillText('?',t.x,y+4);
+    ctx.font='bold 11px Outfit,Arial';
+    const tw=ctx.measureText(t.label).width+12;
+    ctx.fillStyle='rgba(9,14,36,.84)';
+    ctx.beginPath();ctx.roundRect(t.x-tw/2,y-36,tw,18,6);ctx.fill();
+    ctx.fillStyle='#f3f7ff';ctx.fillText(t.label,t.x,y-23);
+  });
+  hazards.forEach(h=>{
+    ctx.fillStyle='#ff5e8a';ctx.beginPath();ctx.moveTo(h.x,h.y+h.h);ctx.lineTo(h.x+8,h.y+7);ctx.lineTo(h.x+17,h.y+18);ctx.lineTo(h.x+27,h.y+5);ctx.lineTo(h.x+h.w,h.y+h.h);ctx.fill();
+    ctx.fillStyle='white';ctx.font='bold 15px Outfit,Arial';ctx.textAlign='center';ctx.fillText('!',h.x+17,h.y+29);
+  });
+  ctx.fillStyle='#cbd5e1';ctx.fillRect(goal.x,goal.y-72,6,72);
+  ctx.fillStyle=correct>=required?'#34d399':'#ffd147';
+  ctx.beginPath();ctx.moveTo(goal.x+6,goal.y-70);ctx.lineTo(goal.x+64,goal.y-53);ctx.lineTo(goal.x+6,goal.y-35);ctx.fill();
+  ctx.fillStyle='#f3f7ff';ctx.font='bold 11px Outfit,Arial';ctx.textAlign='center';ctx.fillText(correct>=required?'FINISH OPEN!':'COLLECT '+required,goal.x+30,goal.y-80);
+
+  const p=player;
+  if(invulnerable===0||Math.floor(invulnerable/5)%2===0){
+    ctx.fillStyle='#192859';ctx.fillRect(p.x,p.y+10,p.w,p.h-10);
+    ctx.fillStyle='#ffd1a8';ctx.beginPath();ctx.arc(p.x+15,p.y+9,12,0,7);ctx.fill();
+    ctx.fillStyle='#22e5d2';ctx.fillRect(p.x+4,p.y+21,22,17);
+    ctx.fillStyle='#111';ctx.fillRect(p.x+19,p.y+5,4,4);
+    ctx.fillStyle='#ffd147';ctx.fillRect(p.x+3,p.y+38,10,4);ctx.fillRect(p.x+19,p.y+38,10,4);
+  }
+  ctx.restore();
+
+  ctx.fillStyle='#ffd147';ctx.font='bold 13px Outfit,Arial';ctx.textAlign='left';
+  ctx.fillText('STAGE '+(stage+1)+' · COLLECT '+missions[stage].category+' · ← → / A D MOVE · SPACE JUMP',16,24);
+}
+
+function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function loseLife(){
+  if(invulnerable>0)return;
+  lives--;invulnerable=95;player.vy=-6;audio.sfx('bad');updateHUD();
+  if(lives<=0)endGame(false,'You ran out of lives. Review the item names and try again.');
+}
+function collect(t){
+  t.taken=true;
+  if((stage===0&&t.kind==='asset')||(stage===1&&t.kind==='income')||(stage===2&&t.kind==='liability')||(stage===3&&t.kind==='expense')){
+    score+=100;correct++;audio.sfx('good');
+  }else{
+    score=Math.max(0,score-50);loseLife();
+  }
+  updateHUD();
+}
+function tick(){
+  if(!playing)return;
+  if(paused){raf=requestAnimationFrame(tick);return;}
+  frame++;
+  const p=player,speed=3.4+stage*.22;
+  p.vx=((keys.ArrowRight||keys.d||keys.D)?speed:0)-((keys.ArrowLeft||keys.a||keys.A)?speed:0);
+  p.x=Math.max(0,Math.min(world-p.w,p.x+p.vx));
+  p.vy+=gravity;const oldY=p.y;p.y+=p.vy;p.on=false;
+  platforms.forEach(pl=>{if(p.vy>=0&&p.x+p.w>pl[0]&&p.x<pl[0]+pl[2]&&p.y+p.h>=pl[1]&&oldY+p.h<=pl[1]+5){p.y=pl[1]-p.h;p.vy=0;p.on=true}});
+  if(p.y>H+70){loseLife();p.y=330;p.x=Math.max(0,p.x-80)}
+  tokens.forEach(t=>{if(!t.taken&&overlap(p,{x:t.x-15,y:t.y-15,w:30,h:30}))collect(t)});
+  hazards.forEach(h=>{h.x+=h.v;if(h.x<h.min||h.x>h.max)h.v*=-1;if(overlap(p,h))loseLife()});
+  if(invulnerable>0)invulnerable--;
+  cam=Math.max(0,Math.min(world-W,p.x-W*.38));
+  if(overlap(p,{x:goal.x-5,y:goal.y-75,w:70,h:78})){
+    if(correct>=required){
+      const bonus=timeLeft*10;score+=bonus;audio.sfx('win');
+      endGame(true,`You reached the finish flag after collecting all ${required} items! Time bonus: ${timeLeft} × 10 = ${bonus} points.`);
+    }else if(frame%45===0){audio.sfx('bad');}
+  }
+  draw();
+  if(playing)raf=requestAnimationFrame(tick);
+}
+function jump(){if(playing&&!paused&&player.on){player.vy=-12.4;player.on=false;audio.sfx('jump');}}
+function startStage(){
+  $('message').style.display='none';setupStage();playing=true;paused=false;
+  timerId=setInterval(()=>{
+    if(!playing||paused)return;
+    timeLeft--;updateHUD();
+    if(timeLeft<=0)endGame(false,'Time is up! You did not collect enough correct items.');
+  },1000);
+  tick();
+}
+async function endGame(won,text){
+  if(!playing)return;
+  playing=false;paused=false;clearInterval(timerId);cancelAnimationFrame(raf);
+  lastWon=won;
+  const isFinalEnd=(won&&stage===3)||lives<=0;
+  runEnded=isFinalEnd;
+  let extra='';
+  if(isFinalEnd){
+    audio.stopMusic();
+    const res = await window.FinPlayBridge.finishAttempt(score);
+    const st = window.FinPlayBridge.getState();
+    const rem = res.attemptsLeft ?? st.attemptsLeft;
+    extra=` Best score: ${(res.bestScore??st.bestScore).toLocaleString()}.`+(st.isAdmin?'':` Tries left: ${rem}.`);
+    $('msgEmoji').textContent=(won&&stage===3)||res.isNewBest?'🏆':'🏁';
+    $('msgTitle').textContent=won?'Finance Champion!':'Game Over';
+    if(!st.isAdmin&&rem<=0)$('continue').textContent='🕹️ Back to Arcade Hub';
+    else $('continue').textContent=st.isAdmin?'Play Again (Preview)':`🚀 Play Again (${rem} left)`;
+  }else{
+    $('msgEmoji').textContent=won?'🏁':'⏱️';
+    $('msgTitle').textContent=won?'Stage '+(stage+1)+' complete!':'Stage failed';
+    $('continue').textContent=won?'Next stage →':'Retry stage';
+  }
+  $('msgText').textContent=text+` Current score: ${score.toLocaleString()}. Correct: ${correct}/${required}.`+extra;
+  $('message').style.display='grid';
 }
 async function begin(){
- if(starting)return;
- starting=true;
- try{
-  if(playing){
-   playing=false;clearInterval(timerId);cancelAnimationFrame(raf);
-   await window.FinPlayBridge.finishAttempt(score);
-  }
-  const res = await window.FinPlayBridge.beginAttempt();
-  if(!res.ok)return;
-  stage=0;score=0;lives=3;runEnded=false;$('intro').style.display='none';startStage();
- }finally{starting=false;}
+  if(starting)return;
+  starting=true;
+  try{
+    if(playing){playing=false;clearInterval(timerId);cancelAnimationFrame(raf);await window.FinPlayBridge.finishAttempt(score);}
+    const res = await window.FinPlayBridge.beginAttempt();
+    if(!res.ok)return;
+    stage=0;score=0;lives=3;runEnded=false;
+    $('intro').style.display='none';$('pauseOverlay').style.display='none';
+    audio.startMusic();
+    startStage();
+  }finally{starting=false;}
 }
+function pauseGame(){
+  if(!playing||paused)return;
+  paused=true;keys={};audio.pauseMusic();
+  $('pauseBtn').textContent='▶ Resume';
+  $('pauseOverlay').style.display='grid';
+}
+function resumeGame(){
+  if(!playing||!paused)return;
+  paused=false;audio.resumeMusic();
+  $('pauseBtn').textContent='⏸ Pause';
+  $('pauseOverlay').style.display='none';
+}
+function syncMusicBtn(){$('musicBtn').textContent=audio.muted?'🔇 Muted':'🎵 Music';}
+syncMusicBtn();
+$('musicBtn').onclick=()=>{audio.toggleMute();syncMusicBtn();};
+$('pauseBtn').onclick=()=>{if(paused)resumeGame();else pauseGame();};
+$('resumeBtn').onclick=resumeGame;
+$('fullscreenBtn').onclick=async()=>{
+  try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(_){}
+};
+document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').textContent=document.fullscreenElement?'✕ Exit':'⛶ Full';setTimeout(resizeCanvas,60);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing&&!paused)pauseGame();});
+
 $('start').onclick=begin;
 $('continue').onclick=()=>{
- $('message').style.display='none';
- if(runEnded){
-  const st = window.FinPlayBridge.getState();
-  if(!st.isAdmin && st.attemptsLeft<=0){location.href='/';return;}
-  begin();
- }else{
-  if(lastWon)stage++;
-  startStage();
- }
+  $('message').style.display='none';
+  if(runEnded){
+    const st=window.FinPlayBridge.getState();
+    if(!st.isAdmin&&st.attemptsLeft<=0){location.href='/';return;}
+    begin();
+  }else{if(lastWon)stage++;startStage();}
 };
 $('restart').onclick=begin;
-$('sound').onclick=()=>{sound=!sound;$('sound').textContent='Sound: '+(sound?'On':'Off');if(sound)beep()};
-window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp',' ','w','a','d','W','A','D'].includes(e.key))e.preventDefault();keys[e.key]=true;if([' ','ArrowUp','w','W'].includes(e.key))jump()});window.addEventListener('keyup',e=>keys[e.key]=false);
-function hold(id,k){let el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>keys[k]=false))}
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'||e.key==='p'||e.key==='P'){
+    if(playing){e.preventDefault();if(paused)resumeGame();else pauseGame();}
+    return;
+  }
+  if(['ArrowLeft','ArrowRight','ArrowUp',' ','w','a','d','W','A','D'].includes(e.key))e.preventDefault();
+  keys[e.key]=true;
+  if([' ','ArrowUp','w','W'].includes(e.key))jump();
+});
+window.addEventListener('keyup',e=>keys[e.key]=false);
+function hold(id,k){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>keys[k]=false))}
 hold('left','ArrowLeft');hold('right','ArrowRight');$('jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+window.addEventListener('resize',resizeCanvas);
 setupStage();
-window.FinPlayBridge.init('cash-collector');
+resizeCanvas();
+window.FinPlayBridge.init('cash-collector').then(()=>setTimeout(resizeCanvas,50));
 })();
 </script></body></html>

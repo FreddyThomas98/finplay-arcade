@@ -181,7 +181,8 @@ canvas{
     </div>
 
     <div class="hud-right">
-      <button class="icon-btn" id="sound" title="Toggle Sound">🔇 Sound</button>
+      <button class="icon-btn" id="sound" title="Mute / Unmute Music & SFX">🎵 Music</button>
+      <button class="icon-btn" id="pauseBtn" title="Pause Game (P / Esc)">⏸ Pause</button>
       <button class="icon-btn" id="restart" title="Restart (uses 1 try)">↻ Restart</button>
       <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">⛶ Full</button>
     </div>
@@ -231,6 +232,7 @@ canvas{
 </div>
 
 <script src="/js/game-bridge.js"></script>
+<script src="/js/arcade-audio.js"></script>
 <script>
 (()=>{
 'use strict';
@@ -287,8 +289,7 @@ let player = { x: PLAYER_X, y: H / 2, vy: 0 };
 let gate = null;
 let obstacles = [];
 let questionQueue = [];
-let sound = false;
-let audio = null;
+const sfx = window.FinPlayAudio.create('flappy');
 let lastTimestamp = 0;
 let accumulator = 0;
 let advanceTimeout = 0;
@@ -356,20 +357,7 @@ function nextQuestionData() {
 }
 
 function beep(freq = 550, duration = 0.07, type = 'sine') {
-  if (!sound) return;
-  try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    osc.connect(gain);
-    gain.connect(audio.destination);
-    gain.gain.setValueAtTime(0.045, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + duration);
-    osc.start();
-    osc.stop(audio.currentTime + duration);
-  } catch (_) {}
+  sfx.tone(freq, duration, type, 0.045);
 }
 
 function spawnParticles(x, y, color, count = 16, speed = 4.2) {
@@ -561,6 +549,8 @@ async function endGame() {
   playing = false;
   paused = false;
   cancelAnimationFrame(raf);
+  sfx.stopMusic();
+  sfx.sfx('gameover');
 
   const res = await window.FinPlayBridge.finishAttempt(score);
   const st = window.FinPlayBridge.getState();
@@ -1151,6 +1141,7 @@ async function startGame() {
     playing = true;
     lastTimestamp = 0;
     accumulator = 0;
+    sfx.startMusic();
     raf = requestAnimationFrame(loop);
   } finally {
     starting = false;
@@ -1160,6 +1151,8 @@ async function startGame() {
 function pauseGame() {
   if (!playing || paused) return;
   paused = true;
+  sfx.pauseMusic();
+  $('pauseBtn').textContent = '▶ Resume';
   $('pauseOverlay').style.display = 'grid';
 }
 
@@ -1168,6 +1161,8 @@ function resumeGame() {
   paused = false;
   lastTimestamp = 0;
   accumulator = 0;
+  sfx.resumeMusic();
+  $('pauseBtn').textContent = '⏸ Pause';
   $('pauseOverlay').style.display = 'none';
 }
 
@@ -1176,11 +1171,15 @@ $('start').addEventListener('click', startGame);
 $('restart').addEventListener('click', startGame);
 $('playAgain').onclick = startGame;
 $('resumeBtn').addEventListener('click', resumeGame);
+$('pauseBtn').addEventListener('click', () => { if (paused) resumeGame(); else pauseGame(); });
 
+function syncMuteBtn() {
+  $('sound').textContent = sfx.muted ? '🔇 Muted' : '🎵 Music';
+}
+syncMuteBtn();
 $('sound').addEventListener('click', () => {
-  sound = !sound;
-  $('sound').textContent = sound ? '🔊 Sound' : '🔇 Sound';
-  if (sound) beep(660, 0.06);
+  sfx.toggleMute();
+  syncMuteBtn();
 });
 
 $('fullscreenBtn').addEventListener('click', async () => {
@@ -1205,6 +1204,10 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+    if (playing) { e.preventDefault(); if (paused) resumeGame(); else pauseGame(); }
+    return;
+  }
   if ([' ', 'ArrowUp', 'w', 'W'].includes(e.key)) {
     e.preventDefault();
     if (paused) resumeGame();

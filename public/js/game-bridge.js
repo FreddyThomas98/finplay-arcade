@@ -190,7 +190,7 @@
     `;
   }
 
-  function showLockOverlay(customMsg) {
+  function showLockOverlay(customMsg, title = 'Out of Tries!') {
     let ov = document.getElementById('finplay-lock-overlay');
     if (ov) ov.remove();
     ov = document.createElement('div');
@@ -199,7 +199,7 @@
     ov.innerHTML = `
       <div class="fp-lock-card">
         <div style="font-size:48px;">🔒</div>
-        <h2>Out of Tries!</h2>
+        <h2>${title}</h2>
         <p>${customMsg || `You have used all ${state.maxAttempts} attempts for ${state.game?.title || 'this game'}. Ask your Admin to reset your attempts if you'd like another go!`}</p>
         <p style="color:#ffd147;font-weight:800;font-size:17px;">Your Best Score: ${state.bestScore.toLocaleString()}</p>
         <div class="fp-lock-actions">
@@ -274,6 +274,7 @@
       state.user = data.user;
       state.game = data.game;
       state.isAdmin = Boolean(data.isAdmin);
+      state.isLocked = Boolean(data.isLocked);
       state.attemptsUsed = data.attemptsUsed;
       state.maxAttempts = data.maxAttempts;
       state.attemptsLeft = data.attemptsLeft;
@@ -281,7 +282,12 @@
       state.ready = true;
       renderBar();
 
-      if (!state.isAdmin && state.attemptsLeft <= 0) {
+      if (!state.isAdmin && state.isLocked) {
+        showLockOverlay(
+          `${state.game?.title || 'This game'} is currently locked by Admin. Check back once your Admin unlocks it!`,
+          'Game Locked by Admin'
+        );
+      } else if (!state.isAdmin && state.attemptsLeft <= 0) {
         showLockOverlay();
       }
       return true;
@@ -306,9 +312,14 @@
       }
       const data = await res.json();
       if (!res.ok) {
-        state.attemptsLeft = 0;
-        renderBar();
-        showLockOverlay(data.error);
+        if (data.isLocked) {
+          state.isLocked = true;
+          showLockOverlay(data.error, 'Game Locked by Admin');
+        } else {
+          state.attemptsLeft = 0;
+          renderBar();
+          showLockOverlay(data.error);
+        }
         return { ok: false, error: data.error };
       }
       state.sessionId = data.sessionId;

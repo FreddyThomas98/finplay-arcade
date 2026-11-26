@@ -81,8 +81,24 @@ html,body{
 .cell.correct input{color:#052319}
 .cell.wrong{background:#ff9eb8;border-color:#ff5e8a}
 .cell.wrong input{color:#350816}
+.cell.revealed-ans{background:#fde68a;border-color:#f59e0b}
+.cell.revealed-ans input{color:#451a03}
 .num{position:absolute;top:2px;left:3px;font-size:9px;line-height:1;color:#b8cbef;pointer-events:none;font-weight:800}
-.cell:focus-within .num,.cell.active .num,.cell.correct .num,.cell.wrong .num{color:#15254a}
+.cell:focus-within .num,.cell.active .num,.cell.correct .num,.cell.wrong .num,.cell.revealed-ans .num{color:#15254a}
+.answer-key{
+  margin:12px 0 8px;text-align:left;max-height:210px;overflow-y:auto;
+  background:rgba(9,14,36,.72);border:1px solid rgba(139,172,255,.26);
+  border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;
+}
+.ak-item{font-size:12px;color:#cbd8f2;display:flex;align-items:center;gap:6px}
+.ak-item b{color:#ffd147;letter-spacing:.03em}
+.ak-item.ok b{color:#34d399}
+.review-bar{
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:75;
+  display:none;align-items:center;gap:10px;
+  background:rgba(16,24,58,.96);border:1.5px solid #ffd147;border-radius:99px;
+  padding:8px 16px;box-shadow:0 12px 32px rgba(0,0,0,.55);font-size:13px;font-weight:700;
+}
 
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;flex-shrink:0}
 .btn{
@@ -199,6 +215,11 @@ html,body{
     <p>The timer is safely paused while you take a break.</p>
     <button class="btn" id="resumeBtn">▶ Resume Puzzle</button>
   </div>
+</div>
+
+<div class="review-bar" id="reviewBar">
+  <span>💡 Green = Your Solved Words · Gold = Revealed Answers</span>
+  <button class="btn" id="backToResultsBtn" style="padding:7px 13px;font-size:12px;">🏁 Back to Results</button>
 </div>
 
 <script src="/js/game-bridge.js"></script>
@@ -399,24 +420,66 @@ function clearWord(){
   focusCell(selected.r,selected.c);
 }
 
+function revealAllAnswersOnGrid(){
+  entries.forEach(e=>{
+    const wasSolved = solved.has(e.number+'-'+e.dir);
+    cellCoords(e).forEach(([r,c], idx)=>{
+      const inp = inputs[key(r,c)];
+      if(!inp)return;
+      inp.value = e.word[idx];
+      inp.disabled = true;
+      const cell = inp.parentElement;
+      cell.classList.remove('wrong','active');
+      if(!wasSolved && !cell.classList.contains('correct')){
+        cell.classList.add('revealed-ans');
+      }
+    });
+  });
+  setFeedback('All 10 answers revealed on the grid! (Green = Solved, Gold = Revealed)','good');
+}
+
 async function finish(won){
   if(ended)return;
   ended=true;playing=false;paused=false;clearInterval(timer);
   audio.stopMusic();audio.sfx(won?'win':'bad');
   let bonus=0;
   if(won){bonus=seconds*2;score+=bonus;updateHud();}
+  // Automatically reveal all answers on the crossword grid!
+  revealAllAnswersOnGrid();
   const res = await window.FinPlayBridge.finishAttempt(score);
   const st = window.FinPlayBridge.getState();
   const rem = res.attemptsLeft ?? st.attemptsLeft;
   const canAgain = st.isAdmin || rem > 0;
   const btnText = canAgain ? (st.isAdmin ? 'PLAY ANOTHER (PREVIEW)' : `🚀 PLAY ANOTHER PUZZLE (${rem} LEFT)`) : '🕹️ BACK TO ARCADE';
-  if(won){
-    $('modal').innerHTML='<div style="font-size:48px;">🏆</div><h2>Crossword Completed!</h2><p>Awesome job! You solved all '+entries.length+' accounting words.</p><p>Final score: <b style="color:#ffd147;font-size:26px;">'+score+'</b><br>Time bonus: <b>+'+bonus+'</b> · Best score: <b>'+(res.bestScore??st.bestScore)+'</b>'+(st.isAdmin?'':'<br>Tries remaining: <b>'+rem+'</b>')+'</p><button class="btn" id="nextBtn">'+btnText+'</button>';
-  }else{
-    $('modal').innerHTML='<div style="font-size:48px;">⏱️</div><h2>Time is up!</h2><p>You solved '+solved.size+' of '+entries.length+' words.</p><p>Final score: <b style="color:#ffd147;font-size:26px;">'+score+'</b><br>Best score: <b>'+(res.bestScore??st.bestScore)+'</b>'+(st.isAdmin?'':'<br>Tries remaining: <b>'+rem+'</b>')+'</p><button class="btn" id="nextBtn">'+btnText+'</button>';
-  }
+  const sortedEntries = [...entries].sort((a,b)=>a.number-b.number || (a.dir==='A'?-1:1));
+  const answerKeyHtml = '<div class="answer-key">' + sortedEntries.map(e => {
+    const ok = solved.has(e.number+'-'+e.dir);
+    return '<div class="ak-item'+(ok?' ok':'')+'"><span>'+(ok?'✅':'💡')+'</span><span>'+e.number+(e.dir==='A'?'A':'D')+': <b>'+e.word+'</b></span></div>';
+  }).join('') + '</div>';
+
+  const heading = won
+    ? '<div style="font-size:42px;">🏆</div><h2>Crossword Completed!</h2><p>Awesome job! You solved all '+entries.length+' words · Score: <b style="color:#ffd147;font-size:22px;">'+score+'</b> (Time bonus: +'+bonus+')</p>'
+    : '<div style="font-size:42px;">⏱️</div><h2>Time is up!</h2><p>You solved <b>'+solved.size+' / '+entries.length+'</b> words · Final score: <b style="color:#ffd147;font-size:22px;">'+score+'</b></p>';
+
+  $('modal').style.width = 'min(540px,100%)';
+  $('modal').innerHTML = heading +
+    '<div style="font-size:11px;color:#a6b7db;text-transform:uppercase;letter-spacing:.1em;font-weight:800;margin-top:6px;">All 10 Answers (✅ Solved · 💡 Revealed)</div>' +
+    answerKeyHtml +
+    '<p style="margin:6px 0 8px;font-size:13px;">Best score: <b>'+(res.bestScore??st.bestScore)+'</b>'+(st.isAdmin?'':' · Tries left: <b>'+rem+'</b>')+'</p>' +
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
+      '<button class="btn secondary" id="inspectGridBtn">👀 View Filled Grid</button>' +
+      '<button class="btn" id="nextBtn">'+btnText+'</button>' +
+    '</div>';
   $('overlay').style.display='flex';
   $('nextBtn').onclick=()=>{if(!canAgain){location.href='/';return;}location.reload();};
+  $('inspectGridBtn').onclick=()=>{
+    $('overlay').style.display='none';
+    $('reviewBar').style.display='flex';
+  };
+  $('backToResultsBtn').onclick=()=>{
+    $('reviewBar').style.display='none';
+    $('overlay').style.display='flex';
+  };
 }
 
 async function start(){

@@ -302,7 +302,9 @@
       grid.innerHTML = '';
 
       data.games.forEach(g => {
-        const locked = !isAdmin && g.attemptsLeft <= 0;
+        const adminLocked = Boolean(g.isLocked);
+        const lockedByAdmin = !isAdmin && adminLocked;
+        const outOfTries = !isAdmin && g.attemptsLeft <= 0;
         const triesClass = isAdmin
           ? 'tries-ok'
           : g.attemptsLeft === 0
@@ -311,19 +313,25 @@
           ? 'tries-low'
           : 'tries-ok';
         const triesText = isAdmin
-          ? 'Unlimited'
+          ? (adminLocked ? '🔒 Locked (Preview)' : 'Unlimited')
           : `${g.attemptsLeft} / ${g.maxAttempts} left`;
 
         const card = document.createElement('article');
-        card.className = 'game-card';
+        card.className = 'game-card' + (lockedByAdmin ? ' is-locked' : '');
         card.style.setProperty('--card-accent', g.accent);
         card.style.setProperty('--card-accent2', g.accent2);
+
+        const playActionHtml = lockedByAdmin
+          ? `<button class="btn btn-ghost play-btn" disabled>🔒 Locked by Admin — Coming Soon</button>`
+          : outOfTries
+          ? `<button class="btn btn-ghost play-btn" disabled>🔒 0 Tries Left — Ask Admin to Reset</button>`
+          : `<a class="btn btn-primary play-btn" href="${g.url}">▶ Play ${esc(g.shortTitle)}${isAdmin && adminLocked ? ' (Locked)' : ''}</a>`;
 
         card.innerHTML = `
           <div>
             <div class="game-top">
               <div class="game-icon">${g.icon}</div>
-              <span class="game-cat">${esc(g.category)}</span>
+              <span class="game-cat">${adminLocked ? '🔒 Locked' : esc(g.category)}</span>
             </div>
             <h3 class="game-title">${esc(g.title)}</h3>
             <p class="game-desc">${esc(g.description)}</p>
@@ -341,11 +349,7 @@
               </div>
             </div>
             <div style="margin-top:12px;">
-              ${
-                locked
-                  ? `<button class="btn btn-ghost play-btn" disabled>🔒 0 Tries Left — Ask Admin to Reset</button>`
-                  : `<a class="btn btn-primary play-btn" href="${g.url}">▶ Play ${esc(g.shortTitle)}</a>`
-              }
+              ${playActionHtml}
             </div>
           </div>
         `;
@@ -539,11 +543,60 @@
           .join('');
       sel.value = currentVal;
 
+      renderAdminLockGrid();
       renderAdminStudents();
     } catch (err) {
       showToast(err.message, 'error');
     }
   }
+
+  function renderAdminLockGrid() {
+    if (!adminData) return;
+    const grid = $('adminLockGrid');
+    grid.innerHTML = '';
+    adminData.games.forEach(g => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lock-toggle-btn' + (g.isLocked ? ' locked' : '');
+      btn.innerHTML = `
+        <span>${g.icon} ${esc(g.shortTitle)}</span>
+        <span class="lock-pill">${g.isLocked ? '🔒 Locked' : '🔓 Open'}</span>
+      `;
+      btn.onclick = async () => {
+        try {
+          const res = await API.post('/api/admin/toggle-lock', {
+            gameSlug: g.slug,
+            locked: !g.isLocked
+          });
+          showToast(res.message);
+          loadAdmin();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  $('lockAllGamesBtn').onclick = async () => {
+    try {
+      const res = await API.post('/api/admin/toggle-lock', { gameSlug: 'all', locked: true });
+      showToast(res.message);
+      loadAdmin();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  $('unlockAllGamesBtn').onclick = async () => {
+    try {
+      const res = await API.post('/api/admin/toggle-lock', { gameSlug: 'all', locked: false });
+      showToast(res.message);
+      loadAdmin();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
 
   function renderAdminStudents() {
     if (!adminData) return;

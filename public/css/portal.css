@@ -1061,6 +1061,54 @@ tr:hover td {
   background: rgba(255, 94, 138, 0.14);
 }
 
+.lock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.lock-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1.5px solid rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.14);
+  color: #bbf7d0;
+  transition: transform 0.12s, background 0.15s, border-color 0.15s;
+}
+
+.lock-toggle-btn:hover {
+  transform: translateY(-2px);
+}
+
+.lock-toggle-btn.locked {
+  border-color: rgba(255, 94, 138, 0.6);
+  background: rgba(255, 94, 138, 0.16);
+  color: #fecdd3;
+}
+
+.lock-pill {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(9, 14, 36, 0.55);
+}
+
+.game-card.is-locked {
+  opacity: 0.78;
+}
+
+.game-card.is-locked::before {
+  background: linear-gradient(90deg, #ff5e8a, #94a3b8);
+}
+
 /* MODAL & TOAST */
 .modal-backdrop {
   position: fixed;

@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { query, withTransaction, getDefaultMaxAttempts } = require('../db');
+const { query, withTransaction, getDefaultMaxAttempts, getLockedGames, setLockedGames } = require('../db');
 const { requireAuth, requireAdmin } = require('../auth');
 const { GAMES, GAME_SLUGS, GAME_MAP } = require('../games-config');
 
@@ -9,8 +9,9 @@ const router = express.Router();
 router.use(requireAuth, requireAdmin);
 
 async function buildAdminOverview() {
-  const [defaultMax, studentsRes, progressRes, sessionsRes] = await Promise.all([
+  const [defaultMax, lockedGames, studentsRes, progressRes, sessionsRes] = await Promise.all([
     getDefaultMaxAttempts(),
+    getLockedGames(),
     query(
       `SELECT id, full_name, email, avatar, created_at
        FROM users
@@ -86,13 +87,16 @@ async function buildAdminOverview() {
 
   students.sort((a, b) => b.totalScore - a.totalScore || a.fullName.localeCompare(b.fullName));
 
+  const lockedSet = new Set(lockedGames);
   return {
     defaultMaxAttempts: defaultMax,
+    lockedGames,
     games: GAMES.map(g => ({
       slug: g.slug,
       title: g.title,
       shortTitle: g.shortTitle,
-      icon: g.icon
+      icon: g.icon,
+      isLocked: lockedSet.has(g.slug)
     })),
     stats: {
       totalStudents: students.length,
@@ -244,6 +248,37 @@ router.post('/reset-all', async (req, res, next) => {
     res.json({
       ok: true,
       message: `Reset attempts for ALL students (${scopeLabel})${clearScores ? ' and cleared scores' : ''}.`
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/toggle-lock', async (req, res, next) => {
+  try {
+    const gameSlug = String(req.body?.gameSlug || '');
+    const locked = Boolean(req.body?.locked);
+
+    if (gameSlug !== 'all' && !GAME_MAP[gameSlug]) {
+      return res.status(400).json({ error: 'Invalid game selected.' });
+    }
+
+    let nextLocked;
+    if (gameSlug === 'all') {
+      nextLocked = locked ? [...GAME_SLUGS] : [];
+    } else {
+      const current = new Set(await getLockedGames());
+      if (locked) current.add(gameSlug);
+      else current.delete(gameSlug);
+      nextLocked = [...current];
+    }
+
+    const saved = await setLockedGames(nextLocked);
+    const label = gameSlug === 'all' ? 'All 5 games' : GAME_MAP[gameSlug].title;
+    res.json({
+      ok: true,
+      lockedGames: saved,
+      message: `${label} ${locked ? 'locked 🔒' : 'unlocked 🔓'}!`
     });
   } catch (err) {
     next(err);

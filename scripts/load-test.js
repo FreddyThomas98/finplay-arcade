@@ -197,6 +197,46 @@ async function run() {
     assert.ok(csv.data.split('\r\n').length === N + 1);
     console.log('  ✅ 7. Admin single-student reset, reset-all, and CSV export passed');
 
+    // 8. Admin Lock / Unlock game controls
+    const lockRes = await req(baseUrl, '/api/admin/toggle-lock', {
+      method: 'POST',
+      body: { gameSlug: 'cash-collector', locked: true },
+      cookie: adminLogin.cookie
+    });
+    assert.strictEqual(lockRes.status, 200);
+    assert.ok(lockRes.data.lockedGames.includes('cash-collector'));
+
+    const studentLockedStart = await req(baseUrl, '/api/games/cash-collector/start', {
+      method: 'POST',
+      body: {},
+      cookie: s1.cookie
+    });
+    assert.strictEqual(studentLockedStart.status, 403);
+    assert.strictEqual(studentLockedStart.data.isLocked, true);
+
+    const adminPreviewLocked = await req(baseUrl, '/api/games/cash-collector/start', {
+      method: 'POST',
+      body: {},
+      cookie: adminLogin.cookie
+    });
+    assert.strictEqual(adminPreviewLocked.status, 200);
+
+    const unlockRes = await req(baseUrl, '/api/admin/toggle-lock', {
+      method: 'POST',
+      body: { gameSlug: 'cash-collector', locked: false },
+      cookie: adminLogin.cookie
+    });
+    assert.strictEqual(unlockRes.status, 200);
+    assert.ok(!unlockRes.data.lockedGames.includes('cash-collector'));
+
+    const studentUnlockedStart = await req(baseUrl, '/api/games/cash-collector/start', {
+      method: 'POST',
+      body: {},
+      cookie: s1.cookie
+    });
+    assert.strictEqual(studentUnlockedStart.status, 200);
+    console.log('  ✅ 8. Admin game lock & unlock enforcement passed');
+
     console.log('\n🎉 ALL VERIFICATION TESTS PASSED (35 concurrent users, 0 failures)!');
   } finally {
     await new Promise(resolve => server.close(resolve));

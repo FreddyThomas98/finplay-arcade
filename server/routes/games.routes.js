@@ -2,7 +2,7 @@
 
 const crypto = require('crypto');
 const express = require('express');
-const { query, withTransaction, getDefaultMaxAttempts } = require('../db');
+const { query, withTransaction, getDefaultMaxAttempts, getLockedGames } = require('../db');
 const { requireAuth, publicUser } = require('../auth');
 const { GAMES, GAME_MAP } = require('../games-config');
 
@@ -10,13 +10,17 @@ const router = express.Router();
 
 router.get('/', requireAuth, async (req, res, next) => {
   try {
-    const defaultMax = await getDefaultMaxAttempts();
-    const progRes = await query(
-      `SELECT game_slug, attempts_used, max_attempts, best_score, last_score, updated_at
-       FROM game_progress
-       WHERE user_id = $1`,
-      [req.user.id]
-    );
+    const [defaultMax, lockedList, progRes] = await Promise.all([
+      getDefaultMaxAttempts(),
+      getLockedGames(),
+      query(
+        `SELECT game_slug, attempts_used, max_attempts, best_score, last_score, updated_at
+         FROM game_progress
+         WHERE user_id = $1`,
+        [req.user.id]
+      )
+    ]);
+    const lockedSet = new Set(lockedList);
     const progMap = Object.fromEntries(progRes.rows.map(r => [r.game_slug, r]));
 
     const isAdmin = req.user.role === 'admin';
@@ -45,6 +49,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         attemptsLeft,
         bestScore,
         lastScore,
+        isLocked: lockedSet.has(g.slug),
         isAdminPreview: isAdmin
       };
     });
@@ -90,15 +95,19 @@ router.get('/:slug/status', requireAuth, async (req, res, next) => {
     if (!game) {
       return res.status(404).json({ error: 'Game not found.' });
     }
-    const defaultMax = await getDefaultMaxAttempts();
-    const progRes = await query(
-      `SELECT attempts_used, max_attempts, best_score, last_score
-       FROM game_progress
-       WHERE user_id = $1 AND game_slug = $2`,
-      [req.user.id, game.slug]
-    );
+    const [defaultMax, lockedList, progRes] = await Promise.all([
+      getDefaultMaxAttempts(),
+      getLockedGames(),
+      query(
+        `SELECT attempts_used, max_attempts, best_score, last_score
+         FROM game_progress
+         WHERE user_id = $1 AND game_slug = $2`,
+        [req.user.id, game.slug]
+      )
+    ]);
     const p = progRes.rows[0];
     const isAdmin = req.user.role === 'admin';
+    const isLocked = lockedList.includes(game.slug);
     const attemptsUsed = p ? Number(p.attempts_used) : 0;
     const maxAttempts = p ? Number(p.max_attempts) : defaultMax;
     const bestScore = p ? Number(p.best_score) : 0;
@@ -108,6 +117,7 @@ router.get('/:slug/status', requireAuth, async (req, res, next) => {
       user: publicUser(req.user),
       game,
       isAdmin,
+      isLocked,
       attemptsUsed,
       maxAttempts,
       attemptsLeft: isAdmin ? 99 : Math.max(0, maxAttempts - attemptsUsed),
@@ -124,6 +134,16 @@ router.post('/:slug/start', requireAuth, async (req, res, next) => {
     const game = GAME_MAP[req.params.slug];
     if (!game) {
       return res.status(404).json({ error: 'Game not found.' });
+    }
+
+    if (req.user.role !== 'admin') {
+      const lockedList = await getLockedGames();
+      if (lockedList.includes(game.slug)) {
+        return res.status(403).json({
+          error: `${game.title} is currently locked by Admin. Please wait until Admin unlocks it!`,
+          isLocked: true
+        });
+      }
     }
 
     const sessionId = crypto.randomUUID();

@@ -108,6 +108,30 @@ async function getDefaultMaxAttempts(db = { query }) {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 20 ? parsed : 3;
 }
 
+async function getLockedGames(db = { query }) {
+  const res = await db.query(
+    "SELECT value FROM portal_settings WHERE key = 'locked_games'"
+  );
+  try {
+    const parsed = JSON.parse(res.rows[0]?.value || '[]');
+    return Array.isArray(parsed) ? parsed.filter(s => typeof s === 'string') : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+async function setLockedGames(slugs, db = { query }) {
+  const unique = [...new Set(slugs.filter(s => typeof s === 'string'))];
+  await db.query(
+    `INSERT INTO portal_settings (key, value, updated_at)
+     VALUES ('locked_games', $1, NOW())
+     ON CONFLICT (key)
+     DO UPDATE SET value = $1, updated_at = NOW()`,
+    [JSON.stringify(unique)]
+  );
+  return unique;
+}
+
 async function initDb() {
   await ensureConnected();
 
@@ -215,6 +239,8 @@ module.exports = {
   withTransaction,
   initDb,
   getDefaultMaxAttempts,
+  getLockedGames,
+  setLockedGames,
   getDbMode,
   closeDb
 };

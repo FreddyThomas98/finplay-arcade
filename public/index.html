@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinPlay Arcade — Finance & Accounting Games Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- AUTH VIEW -->
+  <section id="authView" class="auth-wrapper hidden">
+    <div class="auth-grid">
+      <div class="auth-hero">
+        <div class="hero-badge">⚡ 5 Live Finance Games · Toppers Scorecard</div>
+        <h1>Welcome to <span class="grad">FinPlay Arcade</span></h1>
+        <p>
+          Ditch boring quizzes! Fly through accounting gates, blast ledgers, crack crosswords,
+          collect assets, and climb the live Champions Podium with your classmates.
+        </p>
+        <div class="floating-icons">
+          <div class="float-chip">🐤 Flappy Finance</div>
+          <div class="float-chip">🔤 Finance Hangman</div>
+          <div class="float-chip">🎯 Finance Blaster</div>
+          <div class="float-chip">🪙 Cash Collector</div>
+          <div class="float-chip">🧩 Accounting Crossword</div>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-switch">
+          <button type="button" id="tabLogin" class="active">Log In</button>
+          <button type="button" id="tabSignup">First Time? Sign Up</button>
+        </div>
+
+        <div id="authError" class="form-error hidden"></div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm">
+          <div class="field">
+            <label for="loginEmail">Gmail Address</label>
+            <input id="loginEmail" type="email" required placeholder="student@gmail.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" required placeholder="Enter your password" autocomplete="current-password">
+          </div>
+          <button type="submit" id="loginSubmit" class="btn btn-primary" style="width:100%;margin-top:6px;">
+            🚀 Enter FinPlay Arcade
+          </button>
+          <div class="auth-note">Admin? Log in with your Admin Gmail &amp; password right here.</div>
+        </form>
+
+        <!-- SIGNUP FORM -->
+        <form id="signupForm" class="hidden">
+          <div class="field">
+            <label for="signupName">Your Full Name</label>
+            <input id="signupName" type="text" required minlength="2" maxlength="80" placeholder="e.g. Aarav Sharma" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="signupEmail">Gmail Address</label>
+            <input id="signupEmail" type="email" required placeholder="aarav@gmail.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="signupPassword">Create Password</label>
+            <input id="signupPassword" type="password" required minlength="4" placeholder="At least 4 characters" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label>Pick Your Arcade Avatar</label>
+            <div id="avatarPicker" class="avatar-picker"></div>
+          </div>
+          <button type="submit" id="signupSubmit" class="btn btn-gold" style="width:100%;margin-top:6px;">
+            ✨ Create Account &amp; Start Playing
+          </button>
+          <div class="auth-note">Your account and best scores are saved automatically!</div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN PORTAL APP -->
+  <div id="appShell" class="hidden">
+    <nav class="navbar">
+      <div class="nav-inner">
+        <div class="brand" id="brandHome">
+          <div class="brand-icon">🎮</div>
+          <div>
+            <div class="brand-name">FinPlay <span>Arcade</span></div>
+            <div class="brand-tag">Play · Learn · Top the Board</div>
+          </div>
+        </div>
+
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-view="hub">🕹️ Arcade Hub</button>
+          <button class="nav-tab" data-view="scorecard">🏆 Scorecard</button>
+          <button class="nav-tab admin-tab hidden" id="navAdminTab" data-view="admin">🛡️ Admin</button>
+        </div>
+
+        <div class="nav-user">
+          <div class="user-pill" id="userPill" title="Click to switch avatar">
+            <div class="user-avatar" id="navAvatar">🦊</div>
+            <div class="user-meta">
+              <b id="navName">Player</b>
+              <small id="navRole">Student</small>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="logoutBtn">Log Out</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- HUB VIEW -->
+      <section id="viewHub">
+        <div class="hero-banner">
+          <div class="welcome-left">
+            <div class="welcome-avatar" id="bannerAvatar">🦊</div>
+            <div>
+              <h1 class="welcome-title" id="bannerGreeting">Ready to play!</h1>
+              <span class="rank-badge" id="bannerBadge">⭐ Coin Rookie</span>
+            </div>
+          </div>
+          <div class="banner-stats">
+            <div class="kpi gold">
+              <small>Total Best Score</small>
+              <strong id="kpiTotalScore">0</strong>
+            </div>
+            <div class="kpi cyan">
+              <small>Your Rank</small>
+              <strong id="kpiRank">—</strong>
+            </div>
+            <div class="kpi mint">
+              <small>Games Tried</small>
+              <strong id="kpiGames">0 / 5</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <div>
+            <h2>🕹️ Choose Your Finance Game</h2>
+            <p id="hubSubtitle">You get 3 attempts per game initially. Your highest score counts on the Scorecard!</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="refreshHubBtn">↻ Refresh Status</button>
+        </div>
+
+        <div id="gamesGrid" class="games-grid"></div>
+      </section>
+
+      <!-- SCORECARD VIEW -->
+      <section id="viewScorecard" class="hidden">
+        <div class="section-head">
+          <div>
+            <h2>🏆 FinPlay Scorecard &amp; Toppers</h2>
+            <p>Live rankings across all students — combined best scores and individual game champions.</p>
+          </div>
+          <div class="inline-form">
+            <button class="btn btn-ghost btn-sm" id="refreshBoardBtn">↻ Refresh Board</button>
+          </div>
+        </div>
+
+        <div id="podiumWrap" class="podium-wrap"></div>
+
+        <div class="filter-pills" id="boardFilters"></div>
+
+        <div class="card-panel">
+          <div class="table-toolbar">
+            <strong id="boardTableTitle">Overall Champions</strong>
+            <input id="boardSearch" class="search-input" type="search" placeholder="🔍 Search student name...">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead id="boardHead"></thead>
+              <tbody id="boardBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN VIEW -->
+      <section id="viewAdmin" class="hidden">
+        <div class="section-head">
+          <div>
+            <h2>🛡️ Admin Command Center</h2>
+            <p>Manage students, reset game retries for one student or everyone, and export scorecards.</p>
+          </div>
+          <div class="inline-form">
+            <a class="btn btn-gold btn-sm" href="/api/admin/export-csv" download>⬇ Export CSV Scorecard</a>
+            <button class="btn btn-ghost btn-sm" id="refreshAdminBtn">↻ Refresh</button>
+          </div>
+        </div>
+
+        <div class="admin-grid">
+          <div class="kpi cyan">
+            <small>Students Registered</small>
+            <strong id="admStudents">0</strong>
+          </div>
+          <div class="kpi gold">
+            <small>Total Plays</small>
+            <strong id="admPlays">0</strong>
+          </div>
+          <div class="kpi mint">
+            <small>Active (15m)</small>
+            <strong id="admActive">0</strong>
+          </div>
+          <div class="kpi">
+            <small>Class Avg Score</small>
+            <strong id="admAvg">0</strong>
+          </div>
+        </div>
+
+        <div class="admin-controls-row">
+          <div class="card-panel" style="margin-bottom:0;">
+            <h3 style="margin:0 0 10px;font-family:Fredoka,Outfit,sans-serif;">🔄 Reset Attempts for ALL Students</h3>
+            <div class="inline-form">
+              <select id="resetAllGameSelect">
+                <option value="all">All 5 Games</option>
+              </select>
+              <label class="checkbox-label">
+                <input type="checkbox" id="resetAllClearScores"> Also clear saved scores
+              </label>
+              <button class="btn btn-coral btn-sm" id="resetAllBtn">Reset Everyone</button>
+            </div>
+          </div>
+
+          <div class="card-panel" style="margin-bottom:0;">
+            <h3 style="margin:0 0 10px;font-family:Fredoka,Outfit,sans-serif;">⚙️ Retry Limit Per Game</h3>
+            <div class="inline-form">
+              <input id="maxAttemptsInput" type="number" min="1" max="20" value="3" style="width:82px;">
+              <button class="btn btn-primary btn-sm" id="saveLimitBtn">Update Limit</button>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">Applies to all students &amp; new signups.</div>
+          </div>
+        </div>
+
+        <div class="card-panel">
+          <div class="table-toolbar">
+            <div>
+              <strong>Student Retry &amp; Score Controls</strong>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+                Click any game chip to reset that single game for a student, or click <b>Reset All 5</b>.
+              </div>
+            </div>
+            <div class="inline-form">
+              <label class="checkbox-label">
+                <input type="checkbox" id="singleClearScores"> Clear scores on student reset
+              </label>
+              <input id="adminSearch" class="search-input" type="search" placeholder="🔍 Search name or Gmail...">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Total Best</th>
+                  <th>Per-Game Best &amp; Tries (Click to Reset 1 Game)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminStudentsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- CONFIRM / AVATAR MODAL -->
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <h3 id="modalTitle">Confirm Action</h3>
+      <p id="modalMessage"></p>
+      <div id="modalBodyExtra"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/portal.js"></script>
+</body>
+</html>

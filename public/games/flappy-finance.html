@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flappy Finance | FinPlay Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090e24;--panel:#16214a;--line:rgba(139,172,255,.26);
+  --cyan:#22e5d2;--gold:#ffd147;--coral:#ff5e8a;--mint:#34d399;
+  --ink:#f3f7ff;--muted:#a6b7db
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--ink);font-family:'Outfit',Segoe UI,Arial,sans-serif;min-height:100vh;
+  background:radial-gradient(circle at 12% 10%,rgba(255,209,71,.2),transparent 36%),
+             radial-gradient(circle at 88% 18%,rgba(34,229,210,.2),transparent 38%),
+             linear-gradient(160deg,#090e24 0%,#141d46 60%,#0c1230 100%)
+}
+.app{max-width:1120px;margin:auto;padding:17px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:50px;height:50px;border-radius:16px;
+  background:linear-gradient(135deg,var(--gold),#ff8a3d);
+  color:#1f1202;display:grid;place-items:center;font-size:26px;font-weight:900;
+  box-shadow:0 8px 24px rgba(255,209,71,.35)
+}
+h1{font-family:'Fredoka','Outfit',sans-serif;font-size:26px;margin:0;letter-spacing:.2px}
+.sub{font-size:11px;color:var(--cyan);letter-spacing:.1em;margin-top:2px;font-weight:700}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{
+  background:rgba(22,33,74,.88);border:1px solid var(--line);border-radius:14px;
+  padding:8px 14px;min-width:92px
+}
+.stat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.stat b{font-size:20px;font-family:'Fredoka','Outfit',sans-serif;color:var(--gold)}
+#lives{color:var(--coral)}
+#qnum{color:var(--cyan)}
+.question{
+  background:linear-gradient(135deg,rgba(28,41,92,.92),rgba(19,28,66,.92));
+  border:1px solid rgba(255,209,71,.35);border-radius:18px;padding:14px 18px;margin-bottom:12px;
+  box-shadow:0 10px 28px rgba(0,0,0,.28)
+}
+.qtop{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.eyebrow{font-size:10px;font-weight:800;color:var(--gold);letter-spacing:.12em}
+.topic{
+  font-size:11px;font-weight:800;color:#051d28;
+  background:linear-gradient(135deg,var(--cyan),#38bdf8);border-radius:20px;padding:5px 11px
+}
+.prompt{font-family:'Fredoka','Outfit',sans-serif;font-size:22px;font-weight:700;line-height:1.3;margin-top:7px;color:#fff}
+.instruction{font-size:12px;color:var(--muted);margin-top:4px}
+.game{
+  background:linear-gradient(135deg,#253674,#141d46);padding:10px;border-radius:20px;
+  border:1px solid rgba(34,229,210,.35);box-shadow:0 16px 42px rgba(0,0,0,.45)
+}
+canvas{width:100%;height:auto;display:block;border-radius:13px;touch-action:none}
+.legend{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+.panel{
+  background:rgba(22,33,74,.86);border:1px solid var(--line);border-radius:16px;
+  padding:14px 16px;flex:1;min-width:220px
+}
+.panel h3{font-size:11px;margin:0 0 6px;color:var(--cyan);letter-spacing:.1em}
+.hint{font-size:13px;color:var(--muted);line-height:1.6}
+.hint b{color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{
+  border:0;border-radius:12px;padding:11px 18px;font-family:inherit;font-weight:800;
+  cursor:pointer;background:linear-gradient(135deg,var(--gold),#ff9f43);color:#1f1202;
+  box-shadow:0 4px 0 #b87f0b;transition:transform .12s
+}
+button:active:not(:disabled){transform:translateY(2px)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.alt{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--line);box-shadow:none}
+button.alt:hover{background:rgba(34,229,210,.18);border-color:var(--cyan)}
+.mobile{display:none;justify-content:center;margin-top:10px}
+.mobile button{
+  width:100%;max-width:340px;height:56px;font-size:17px;
+  background:linear-gradient(135deg,var(--cyan),#38bdf8);color:#041c27;box-shadow:0 4px 0 #0e9e91
+}
+.overlay{
+  position:fixed;inset:0;background:rgba(7,11,28,.86);backdrop-filter:blur(7px);
+  display:grid;place-items:center;padding:16px;z-index:50
+}
+.modal{
+  max-width:510px;width:100%;background:linear-gradient(160deg,#1c295c,#11193b);
+  border:1px solid rgba(255,209,71,.45);border-radius:24px;padding:28px;text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6)
+}
+.emoji{font-size:48px}
+.modal h2{font-family:'Fredoka','Outfit',sans-serif;margin:8px 0 10px;font-size:28px;color:var(--gold)}
+.modal p{font-size:14px;line-height:1.6;color:#c7d6f2}
+.modal button{margin-top:10px;min-width:170px;font-size:15px}
+.final-score{font-family:'Fredoka','Outfit',sans-serif;font-size:40px;font-weight:700;color:var(--cyan);margin:10px 0}
+@media(max-width:700px){.app{padding:9px}.stat{min-width:72px;padding:7px 9px}.stat b{font-size:16px}.prompt{font-size:17px}.mobile{display:flex}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand"><div class="logo">🐤</div><div><h1>Flappy Finance</h1><div class="sub">FINPLAY ARCADE · FLY THROUGH THE RIGHT ANSWER</div></div></div>
+  <div class="stats">
+    <div class="stat"><small>Score</small><b id="score">0</b></div>
+    <div class="stat"><small>Lives</small><b id="lives">♥ ♥ ♥</b></div>
+    <div class="stat"><small>Question</small><b id="qnum">1</b></div>
+  </div>
+</header>
+<section class="question">
+  <div class="qtop"><span class="eyebrow">RANDOM ACCOUNTING CHALLENGE</span><span class="topic" id="topic">CHOOSE THE CORRECT ANSWER</span></div>
+  <div class="prompt" id="prompt">Get ready to fly!</div>
+  <div class="instruction">Fly through the gate containing the correct answer. Missing both gates also costs one life.</div>
+</section>
+<div class="game"><canvas id="game" width="960" height="510" aria-label="Flappy Finance game"></canvas></div>
+<div class="mobile"><button id="flap">TAP TO FLY ↑</button></div>
+<div class="legend">
+  <section class="panel"><h3>CONTROLS</h3><div class="hint">Press <b>Space</b>, <b>↑</b>, click the game area, or tap the button to flap upward. Gravity pulls the bird down. Keep flying continuously from question to question.</div></section>
+  <section class="panel"><h3>SCORING &amp; RULES</h3><div class="hint">Correct gate: <b>+100 points</b> · Wrong gate: <b>−1 life</b> · Miss both gates: <b>−1 life</b>. You have 3 lives. Questions and gate positions change randomly. The game ends when all lives are used.</div><div class="actions"><button class="alt" id="restart">Restart (Uses 1 Try)</button><button class="alt" id="sound">Sound: Off</button></div></section>
+</div>
+</div>
+<div class="overlay" id="intro">
+  <div class="modal"><div class="emoji">🐤</div><h2>Ready to fly through Finance?</h2>
+    <p>One continuous flight with random questions from Trading Account, Profit &amp; Loss Account, Balance Sheet and Books of Original Entry. The two answer gates appear at different heights and positions each time.</p>
+    <p><b>+100 points for a correct answer · 3 lives · Missing a gate costs a life</b></p>
+    <button id="start">🚀 Start Flying</button>
+  </div>
+</div>
+<div class="overlay" id="message" style="display:none">
+  <div class="modal"><div class="emoji" id="msgEmoji">🏁</div><h2 id="msgTitle">Game over</h2>
+    <p id="msgText">Your final score:</p><div class="final-score" id="finalScore">0</div>
+    <p id="msgDetail">Thanks for playing!</p><button id="playAgain">Play again</button>
+  </div>
+</div>
+<script src="/js/game-bridge.js"></script>
+<script>
+(()=>{
+'use strict';
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const W=960,H=510;
+const BASE_GATE_SPEED=3.0;
+const SPEED_INCREASE_EVERY=5;
+const SPEED_INCREMENT=0.75;
+function currentGateSpeed(){
+  return BASE_GATE_SPEED + Math.floor(questionNumber/SPEED_INCREASE_EVERY)*SPEED_INCREMENT;
+}
+const PLAYER_X=175;
+const PLAYER_SIZE=30;
+const questions=[
+["Opening Stock","Trading Account","Profit & Loss Account","A","Opening stock is brought into the Trading Account to calculate gross profit."],
+["Purchases of Goods","Balance Sheet","Trading Account","B","Purchases of goods for resale are recorded in the Trading Account."],
+["Sales","Trading Account","Profit & Loss Account","A","Sales of goods is shown on the credit side of the Trading Account."],
+["Carriage Inwards","Trading Account","Balance Sheet","A","Carriage inwards is a direct expense related to bringing goods into the business."],
+["Direct Wages","Profit & Loss Account","Trading Account","B","Direct wages are included in the Trading Account."],
+["Office Rent","Profit & Loss Account","Trading Account","A","Office rent is an indirect expense shown in the Profit and Loss Account."],
+["Office Salaries","Trading Account","Profit & Loss Account","B","Office salaries are an indirect expense."],
+["Advertisement Expense","Balance Sheet","Profit & Loss Account","B","Advertisement is an indirect selling expense."],
+["Commission Received","Profit & Loss Account","Trading Account","A","Commission received is an indirect income credited to the Profit and Loss Account."],
+["Discount Allowed","Profit & Loss Account","Balance Sheet","A","Discount allowed is an expense shown in the Profit and Loss Account."],
+["Cash in Hand","Balance Sheet","Trading Account","A","Cash in hand is a current asset shown in the Balance Sheet."],
+["Machinery","Profit & Loss Account","Balance Sheet","B","Machinery is a non-current asset shown in the Balance Sheet."],
+["Trade Debtors","Balance Sheet","Trading Account","A","Trade debtors are current assets."],
+["Trade Creditors","Profit & Loss Account","Balance Sheet","B","Trade creditors are current liabilities."],
+["Owner’s Capital","Trading Account","Balance Sheet","B","Capital is shown on the liabilities/equity side of the Balance Sheet."],
+["Credit Purchase of Goods","Purchases Book","Sales Book","A","The Purchases Book records credit purchases of goods for resale."],
+["Credit Sale of Goods","Purchases Book","Sales Book","B","The Sales Book records credit sales of goods."],
+["Goods Returned to Supplier","Purchases Returns Book","Sales Returns Book","A","Returns outward are recorded in the Purchases Returns Book."],
+["Goods Returned by Customer","Sales Returns Book","Purchases Returns Book","A","Returns inward are recorded in the Sales Returns Book."],
+["Cash Received from Customer","Cash Book","Purchases Book","A","Cash receipts and cash payments are recorded in the Cash Book."]
+];
+const topics={
+  'Trading Account':'TRADING ACCOUNT',
+  'Profit & Loss Account':'PROFIT & LOSS ACCOUNT',
+  'Balance Sheet':'BALANCE SHEET',
+  'Purchases Book':'BOOKS OF ORIGINAL ENTRY',
+  'Sales Book':'BOOKS OF ORIGINAL ENTRY',
+  'Purchases Returns Book':'BOOKS OF ORIGINAL ENTRY',
+  'Sales Returns Book':'BOOKS OF ORIGINAL ENTRY',
+  'Cash Book':'BOOKS OF ORIGINAL ENTRY'
+};
+let score=0,lives=3,questionNumber=0,playing=false,raf=0,frame=0;
+let player={x:PLAYER_X,y:245,vy:0};
+let gate=null,questionQueue=[],sound=false,audio=null,feedback='',feedbackFrames=0;
+let questionResolved=false,lastTimestamp=0,accumulator=0,advanceTimeout=0,starting=false;
+
+function shuffle(list){
+  const a=list.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function nextQuestionData(){
+  if(questionQueue.length===0) questionQueue=shuffle(questions);
+  return questionQueue.pop();
+}
+function beep(freq=550,duration=.07){
+  if(!sound)return;
+  try{
+    audio=audio||new(window.AudioContext||window.webkitAudioContext)();
+    const osc=audio.createOscillator(),gain=audio.createGain();
+    osc.frequency.value=freq;osc.connect(gain);gain.connect(audio.destination);
+    gain.gain.value=.04;osc.start();osc.stop(audio.currentTime+duration);
+  }catch(err){}
+}
+function updateHud(){
+  $('score').textContent=score.toLocaleString();
+  $('lives').textContent='♥ '.repeat(lives).trim()||'—';
+  $('qnum').textContent=questionNumber||1;
+}
+function randomGateY(){
+  return 105+Math.random()*300;
+}
+function createQuestion(){
+  const q=nextQuestionData();
+  const correct=q[3];
+  const options=[
+    {text:q[1],correct:correct==='A',letter:'A'},
+    {text:q[2],correct:correct==='B',letter:'B'}
+  ];
+  shuffle(options);
+  const y1=randomGateY();
+  let y2=randomGateY();
+  let tries=0;
+  while(Math.abs(y1-y2)<125 && tries++<20) y2=randomGateY();
+  if(Math.abs(y1-y2)<125) y2=(y1<255?y1+160:y1-160);
+  const left=options[0],right=options[1];
+  gate={
+    options:[
+      {x:W+80+Math.random()*55,y:y1,w:150,h:116,option:left},
+      {x:W+245+Math.random()*70,y:y2,w:150,h:116,option:right}
+    ],
+    resolved:false,missed:false
+  };
+  $('prompt').textContent=q[0];
+  $('topic').textContent=topics[q[1]]||'CHOOSE THE CORRECT ANSWER';
+  questionResolved=false;
+  updateHud();
+}
+function resetGame(){
+  clearTimeout(advanceTimeout);
+  cancelAnimationFrame(raf);
+  score=0;lives=3;questionNumber=0;frame=0;
+  questionQueue=[];player={x:PLAYER_X,y:245,vy:0};
+  feedback='';feedbackFrames=0;playing=false;
+  createQuestion();updateHud();draw();
+}
+function flap(){
+  if(!playing)return;
+  player.vy=-6.2;
+  beep(420,.035);
+}
+async function endGame(){
+  if(!playing)return;
+  clearTimeout(advanceTimeout);
+  playing=false;cancelAnimationFrame(raf);
+  const res = await window.FinPlayBridge.finishAttempt(score);
+  const st = window.FinPlayBridge.getState();
+  const left = res.attemptsLeft ?? st.attemptsLeft;
+  $('msgEmoji').textContent=res.isNewBest?'🏆':'🏁';
+  $('msgTitle').textContent=res.isNewBest?'New Personal Best!':'Game Over!';
+  $('msgText').textContent='You have used all 3 lives. Here is your final score:';
+  $('finalScore').textContent=score.toLocaleString();
+  $('msgDetail').textContent='Questions attempted: '+questionNumber+' · Best score: '+(res.bestScore??st.bestScore).toLocaleString()+(st.isAdmin?'':(' · Tries left: '+left));
+  const btn=$('playAgain');
+  if(!st.isAdmin && left<=0){
+    btn.textContent='🕹️ Back to Arcade Hub';
+    btn.onclick=()=>{location.href='/';};
+  }else{
+    btn.textContent=st.isAdmin?'Play Again (Preview)':'🚀 Play Again ('+left+' left)';
+    btn.onclick=startGame;
+  }
+  $('message').style.display='grid';
+}
+function loseLife(reason){
+  if(!playing)return;
+  lives=Math.max(0,lives-1);
+  feedback=reason==='miss'?'GATE MISSED! −1 LIFE':'WRONG GATE! −1 LIFE';
+  feedbackFrames=55;beep(155,.16);updateHud();
+  if(lives===0){endGame();return;}
+  questionResolved=true;
+  advanceTimeout=setTimeout(()=>{
+    if(!playing)return;
+    questionNumber++;
+    createQuestion();
+  },650);
+}
+function answer(option){
+  if(!playing||questionResolved)return;
+  questionResolved=true;
+  if(option.correct){
+    score+=100;feedback='CORRECT! +100';feedbackFrames=55;beep(780,.09);updateHud();
+    advanceTimeout=setTimeout(()=>{
+      if(!playing)return;
+      questionNumber++;
+      createQuestion();
+    },520);
+  }else{
+    loseLife('wrong');
+  }
+}
+function flapBox(){return{x:player.x-13,y:player.y-12,w:26,h:24};}
+function intersects(a,b){
+  return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+}
+function gateRect(g){return{x:g.x,y:g.y-g.h/2,w:g.w,h:g.h};}
+function drawGate(g){
+  const r=gateRect(g),o=g.option;
+  const accent=o.letter==='A'?'#22e5d2':'#ff7aa2';
+  ctx.save();
+  ctx.shadowColor='rgba(10,16,44,.45)';ctx.shadowBlur=14;ctx.shadowOffsetY=5;
+  ctx.fillStyle=accent;
+  ctx.beginPath();ctx.roundRect(r.x,r.y,r.w,r.h,12);ctx.fill();
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.fillStyle='#131d47';
+  ctx.beginPath();ctx.roundRect(r.x+6,r.y+6,r.w-12,r.h-12,8);ctx.fill();
+  ctx.fillStyle=accent;ctx.font='bold 12px Outfit,Arial';ctx.textAlign='center';
+  ctx.fillText('GATE '+o.letter,r.x+r.w/2,r.y+25);
+  ctx.fillStyle='#f4f8ff';ctx.font='bold 14px Outfit,Arial';
+  const words=o.text.split(' ');let lines=[],line='';
+  const maxWidth=r.w-22;
+  for(const word of words){
+    const test=line?line+' '+word:word;
+    if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word;}else line=test;
+  }
+  if(line)lines.push(line);
+  const lineHeight=17,startY=r.y+r.h/2-(lines.length-1)*lineHeight/2+5;
+  lines.slice(0,3).forEach((t,i)=>ctx.fillText(t,r.x+r.w/2,startY+i*lineHeight,maxWidth));
+  ctx.restore();
+}
+function drawBird(){
+  ctx.save();ctx.translate(player.x+15,player.y+15);
+  ctx.rotate(Math.max(-.38,Math.min(.58,player.vy*.045)));
+  ctx.shadowColor='rgba(255,209,71,.55)';ctx.shadowBlur=12;
+  ctx.fillStyle='#ffd147';ctx.beginPath();ctx.ellipse(0,0,19,14,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='#ff6b4a';ctx.beginPath();ctx.moveTo(15,-1);ctx.lineTo(29,4);ctx.lineTo(15,8);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(7,-6,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111938';ctx.beginPath();ctx.arc(9,-6,2.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff9f43';ctx.beginPath();ctx.ellipse(-5,7,10,5,Math.sin(frame*.35)*.4,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+function draw(){
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#131e4d');grad.addColorStop(.55,'#26367d');grad.addColorStop(1,'#4d3c8e');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  // Subtle twinkling arcade stars
+  ctx.fillStyle='rgba(255,255,255,.35)';
+  for(let s=0;s<18;s++){
+    const sx=(s*67+frame*.15)%W,sy=22+(s*43)%185;
+    ctx.beginPath();ctx.arc(sx,sy,(s%2)+1,0,Math.PI*2);ctx.fill();
+  }
+  // Glowing clouds
+  ctx.fillStyle='rgba(154,188,255,.18)';
+  for(let i=0;i<7;i++){
+    const x=((i*180-frame*.35)%(W+120)+W+120)%(W+120)-40,y=80+(i%3)*44;
+    ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);ctx.arc(x+27,y-6,29,0,Math.PI*2);ctx.arc(x+55,y+3,21,0,Math.PI*2);ctx.fill();
+  }
+  // Neon rolling hills
+  ctx.fillStyle='#1f5f7a';ctx.beginPath();ctx.moveTo(0,455);
+  for(let x=0;x<=W;x+=65)ctx.lineTo(x,415+Math.sin((x+frame*.5)/95)*18);
+  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+  ctx.strokeStyle='#22e5d2';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let x=0;x<=W;x+=65){const y=415+Math.sin((x+frame*.5)/95)*18;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.setLineDash([10,12]);ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,255);ctx.lineTo(W,255);ctx.stroke();ctx.setLineDash([]);
+  if(gate&&!gate.resolved)gate.options.forEach(drawGate);
+  drawBird();
+  if(feedbackFrames>0){
+    ctx.fillStyle=feedback.startsWith('CORRECT')?'#34d399':'#ff5e8a';
+    ctx.font='bold 26px Fredoka,Outfit,Arial';ctx.textAlign='center';ctx.fillText(feedback,W/2,44);
+  }
+  ctx.fillStyle='#a8c5ff';ctx.font='bold 12px Outfit,Arial';ctx.textAlign='left';
+  ctx.fillText('FLY THROUGH ONE ANSWER GATE',18,24);
+}
+function update(dt){
+  if(!playing)return;
+  frame++;
+  const step=Math.min(dt/16.667,2.2);
+  player.vy+=.34*step;player.y+=player.vy*step;
+  if(player.y<8){player.y=8;player.vy=1.5;}
+  if(player.y>H-42){player.y=H-42;player.vy=-1.5;}
+  if(gate&&!gate.resolved){
+    const bird=flapBox();
+    for(const g of gate.options){
+      g.x-=currentGateSpeed()*step;
+      const rect=gateRect(g);
+      if(intersects(bird,rect)){
+        answer(g.option);break;
+      }
+    }
+    if(!gate.resolved){
+      const rightmost=Math.max(...gate.options.map(g=>g.x+g.w));
+      if(rightmost<player.x-8)loseLife('miss');
+    }
+  }
+  if(feedbackFrames>0)feedbackFrames--;
+}
+function loop(timestamp){
+  if(!playing)return;
+  if(!lastTimestamp)lastTimestamp=timestamp;
+  const dt=Math.min(timestamp-lastTimestamp,40);lastTimestamp=timestamp;
+  accumulator+=dt;
+  while(accumulator>=16.667&&playing){update(16.667);accumulator-=16.667;}
+  draw();
+  if(playing)raf=requestAnimationFrame(loop);
+}
+async function startGame(){
+  if(starting)return;
+  starting=true;
+  try{
+    if(playing){
+      playing=false;clearTimeout(advanceTimeout);cancelAnimationFrame(raf);
+      await window.FinPlayBridge.finishAttempt(score);
+    }
+    const res = await window.FinPlayBridge.beginAttempt();
+    if(!res.ok)return;
+    $('intro').style.display='none';$('message').style.display='none';
+    resetGame();playing=true;lastTimestamp=0;accumulator=0;
+    raf=requestAnimationFrame(loop);
+  }finally{starting=false;}
+}
+$('start').addEventListener('click',startGame);
+$('restart').addEventListener('click',startGame);
+$('playAgain').onclick=startGame;
+$('sound').addEventListener('click',()=>{
+  sound=!sound;$('sound').textContent='Sound: '+(sound?'On':'Off');if(sound)beep();
+});
+window.addEventListener('keydown',e=>{
+  if([' ','ArrowUp','w','W'].includes(e.key)){e.preventDefault();flap();}
+});
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();flap();});
+$('flap').addEventListener('pointerdown',e=>{e.preventDefault();flap();});
+resetGame();
+window.FinPlayBridge.init('flappy-finance');
+})();
+</script>
+</body>
+</html>

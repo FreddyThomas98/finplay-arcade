@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finance Hangman | FinPlay Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090e24;--panel:#16214a;--line:rgba(139,172,255,.26);
+  --text:#f3f7ff;--muted:#a6b7db;--cyan:#22e5d2;--gold:#ffd147;--red:#ff5e8a;--green:#34d399;--violet:#a78bfa
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--text);font-family:'Outfit',system-ui,Segoe UI,Arial,sans-serif;min-height:100vh;
+  background:radial-gradient(circle at 15% 12%,rgba(34,229,210,.22),transparent 36%),
+             radial-gradient(circle at 86% 20%,rgba(167,139,250,.22),transparent 38%),
+             linear-gradient(160deg,#090e24 0%,#141d46 58%,#0d1330 100%)
+}
+.app{width:min(1060px,100%);margin:auto;padding:18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.logo{font-family:'Fredoka','Outfit',sans-serif;font-weight:700;font-size:29px;letter-spacing:.5px}
+.logo b{color:var(--cyan)}
+.sub{color:var(--muted);font-size:12px}
+.tag{border:1px solid rgba(34,229,210,.4);border-radius:99px;padding:8px 14px;font-size:11px;font-weight:800;color:var(--cyan);background:rgba(34,229,210,.1)}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.stat{background:rgba(22,33,74,.88);border:1px solid var(--line);border-radius:15px;padding:10px 14px}
+.stat small{display:block;color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.stat strong{font-family:'Fredoka','Outfit',sans-serif;font-size:22px;display:block;margin-top:2px;color:#fff}
+#score{color:var(--gold)}
+#streak{color:var(--green)}
+.progress{height:9px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden;margin-bottom:14px}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));transition:width .25s}
+.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.panel{
+  background:linear-gradient(155deg,rgba(26,39,88,.9),rgba(17,24,58,.9));
+  border:1px solid var(--line);border-radius:20px;padding:20px;min-width:0;
+  box-shadow:0 16px 38px rgba(0,0,0,.3)
+}
+.panelhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.eyebrow{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.7px;font-weight:800}
+.levelchip{font-size:11px;font-weight:800;border-radius:99px;padding:6px 11px;background:rgba(167,139,250,.18);border:1px solid rgba(167,139,250,.4);color:#ddd6fe}
+.clue{font-family:'Fredoka','Outfit',sans-serif;font-size:clamp(19px,2.5vw,24px);font-weight:600;line-height:1.35;margin:10px 0 5px}
+.category{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.word{display:flex;justify-content:center;gap:clamp(4px,1vw,10px);flex-wrap:wrap;margin:24px 0 18px;min-height:54px}
+.letter{
+  width:clamp(26px,4.4vw,42px);height:48px;border-bottom:3px solid #6b89c7;
+  display:grid;place-items:center;font-family:'Fredoka','Outfit',sans-serif;
+  font-size:clamp(18px,3vw,26px);font-weight:700;text-transform:uppercase
+}
+.letter.revealed{color:var(--gold);border-color:var(--gold);text-shadow:0 0 12px rgba(255,209,71,.35)}
+.letter.space{width:15px;border:0}
+.keyboard{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:12px}
+.key{
+  padding:10px 0;border:1px solid rgba(139,172,255,.32);border-radius:10px;
+  background:rgba(34,49,105,.9);color:#f3f7ff;font-weight:800;font-size:14px;cursor:pointer;
+  transition:transform .12s,background .15s
+}
+.key:hover:not(:disabled){background:#344ea8;transform:translateY(-2px);border-color:var(--cyan)}
+.key:disabled{opacity:.3;cursor:default}
+.key.good{background:#125946;border-color:var(--green);color:#bbf7d0;opacity:1}
+.key.bad{background:#64233b;border-color:var(--red);color:#fecdd3;opacity:.65}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button{font:inherit}
+.btn{
+  border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;
+  background:linear-gradient(135deg,var(--cyan),#38bdf8);color:#041c28;
+  box-shadow:0 4px 0 #0e9e91;transition:transform .12s
+}
+.btn:active:not(:disabled){transform:translateY(2px)}
+.btn.secondary{background:rgba(255,255,255,.1);color:#f3f7ff;border:1px solid var(--line);box-shadow:none}
+.btn.secondary:hover:not(:disabled){background:rgba(255,209,71,.16);border-color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.drawing{
+  display:flex;justify-content:center;align-items:center;min-height:220px;
+  background:rgba(9,14,36,.75);border:1px solid var(--line);border-radius:16px;overflow:hidden
+}
+.drawing svg{width:min(100%,300px);height:230px}
+.gallows{stroke:#7c97cf;stroke-width:7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.person{stroke:#ffd147;stroke-width:5.5;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .2s;filter:drop-shadow(0 0 6px rgba(255,209,71,.45))}
+.person.show{opacity:1}
+.livesline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:10px 0}
+.lifeicons{color:var(--red);letter-spacing:3px;font-size:18px}
+.feedback{
+  min-height:44px;margin-top:10px;border-radius:12px;padding:10px 13px;
+  background:rgba(9,14,36,.7);color:#c3d4f0;font-size:13px;line-height:1.4;border:1px solid transparent
+}
+.feedback.good{color:#a7f3d0;border-color:rgba(52,211,153,.5);background:rgba(16,185,129,.12)}
+.feedback.bad{color:#fecdd3;border-color:rgba(255,94,138,.5);background:rgba(255,94,138,.12)}
+.scorehint{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+.overlay{
+  position:fixed;inset:0;background:rgba(7,11,28,.88);backdrop-filter:blur(7px);
+  display:flex;align-items:center;justify-content:center;padding:16px;z-index:50
+}
+.modal{
+  width:min(490px,100%);background:linear-gradient(160deg,#1c295c,#11193b);
+  border:1px solid rgba(34,229,210,.45);border-radius:24px;padding:28px;text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6)
+}
+.modal h2{font-family:'Fredoka','Outfit',sans-serif;font-size:28px;margin:0 0 8px;color:var(--gold)}
+.modal p{color:#c7d6f2;line-height:1.55}
+.modal .btn{margin-top:10px;padding:13px 24px}
+.modeinfo{font-size:12px;color:var(--cyan)}
+@media(max-width:760px){.app{padding:10px}.layout{grid-template-columns:1fr}.hud{grid-template-columns:repeat(3,1fr)}.stat strong{font-size:18px}.panel{padding:14px}.drawing{min-height:185px}.drawing svg{height:195px}.keyboard{grid-template-columns:repeat(7,1fr)}}
+</style></head>
+<body><main class="app">
+<header><div><div class="logo">🔤 FINANCE <b>HANGMAN</b></div><div class="sub">Decode the clue. Reveal the term. Beat all 5 levels.</div></div><div class="tag">FINPLAY ARCADE · 02</div></header>
+<section class="hud">
+<div class="stat"><small>Score</small><strong id="score">0</strong></div><div class="stat"><small>Level</small><strong id="level">1 / 5</strong></div><div class="stat"><small>Streak</small><strong id="streak">0</strong></div><div class="stat"><small>Difficulty</small><strong id="difficulty">Easy</strong></div><div class="stat"><small>Hints left</small><strong id="hints">2</strong></div>
+</section><div class="progress"><div id="progress"></div></div>
+<div class="layout">
+<section class="panel">
+ <div class="panelhead"><span class="eyebrow">Your challenge</span><span class="levelchip" id="mode">DEFINITION MODE</span></div>
+ <div class="category" id="category">BASIC ACCOUNTING</div>
+ <div class="clue" id="clue">Money invested by the owner into the business.</div>
+ <div class="word" id="word"></div>
+ <div class="eyebrow">Choose a letter</div><div class="keyboard" id="keyboard"></div>
+ <div class="actions"><button class="btn secondary" id="hintBtn">💡 Use hint (−30 pts)</button><button class="btn secondary" id="skipBtn">⏭ Skip question (−50 pts)</button></div>
+ <div class="feedback" id="feedback">Select a letter to begin. You have 6 chances on this level.</div>
+ <div class="scorehint">Correct word: +100 points · No mistakes: +50 bonus · Hint: −30 points · Skip: −50 points</div>
+</section>
+<section class="panel">
+ <div class="panelhead"><span class="eyebrow">Attempts remaining</span><span class="levelchip" id="attemptText">6 / 6</span></div>
+ <div class="drawing">
+ <svg viewBox="0 0 300 230" role="img" aria-label="Hangman progress drawing">
+  <path class="gallows" d="M42 207 H180 M75 207 V22 H190 V48"/>
+  <circle class="person" id="p1" cx="190" cy="67" r="19"/>
+  <path class="person" id="p2" d="M190 86 V145"/>
+  <path class="person" id="p3" d="M190 101 L160 126"/>
+  <path class="person" id="p4" d="M190 101 L220 126"/>
+  <path class="person" id="p5" d="M190 145 L164 181"/>
+  <path class="person" id="p6" d="M190 145 L216 181"/>
+ </svg></div>
+ <div class="livesline"><span>Wrong guesses left</span><span class="lifeicons" id="hearts">♥ ♥ ♥ ♥ ♥ ♥</span></div>
+ <div class="panelhead" style="margin-top:17px"><span class="eyebrow">Letters used</span><span class="levelchip" id="usedCount">0 letters</span></div>
+ <div id="used" style="min-height:45px;color:#c3d4f0;line-height:1.8;font-size:13px">None yet</div>
+ <div class="feedback" id="levelNote">Every level gets tougher: longer terms, trickier clues and fewer attempts.</div>
+</section></div>
+</main>
+<div class="overlay" id="overlay"><div class="modal" id="modal"><div style="font-size:48px;">🔤</div><h2>Ready to decode?</h2><p>Guess accounting terms from definitions and category clues. There are 5 levels, with 3 possible questions at each level, with harder vocabulary, trickier clues and fewer attempts as you advance.</p><p class="modeinfo">Keyboard or on-screen letters · 2 hints per level · Streak bonuses</p><button class="btn" id="startBtn">🚀 START LEVEL 1</button></div></div>
+<script src="/js/game-bridge.js"></script>
+<script>
+(()=>{
+const categoryMode=[
+['NON-CURRENT ASSET','A long-term tangible resource used in business operations.','PROPERTY PLANT EQUIPMENT','category'],
+['CURRENT LIABILITY','An amount normally due for settlement within the operating cycle or twelve months.','SHORT-TERM OBLIGATION','category'],
+['REVENUE','Income earned from the ordinary activities of a business.','INCOME STATEMENT','category'],
+['OPERATING EXPENSE','A recurring cost incurred to run the day-to-day business.','EXPENSE CLASSIFICATION','category'],
+['CONTRA ASSET','An account that reduces the gross carrying amount of a related asset.','VALUATION ACCOUNT','category'],
+['INTANGIBLE ASSET','An identifiable non-monetary asset without physical substance.','NON-CURRENT ASSET','category'],
+['ACCRUED EXPENSE','A cost recognised before the related cash payment is made.','YEAR-END ADJUSTMENT','category'],
+['BAD DEBT','A receivable that is considered uncollectible.','RECEIVABLES','category'],
+['BANK RECONCILIATION','A statement explaining differences between cash book and bank statement balances.','CONTROL PROCEDURE','category'],
+['CASH FLOW STATEMENT','A financial statement reporting cash generated and used during a period.','FINANCIAL STATEMENTS','category'],
+['BREAK EVEN POINT','The level of activity at which total revenue equals total costs.','COST ACCOUNTING','category'],
+['MARGINAL COSTING','A technique that separates variable costs and treats fixed costs as period costs.','MANAGEMENT ACCOUNTING','category'],
+['GOODWILL','An intangible asset arising on acquisition representing future economic benefits.','BUSINESS COMBINATION','category'],
+['CAPITAL RESERVE','A reserve generally created from capital profits rather than normal trading profits.','RESERVES','category'],
+['DEFERRED REVENUE','Cash received before the related goods or services are provided.','LIABILITY','category'],
+['CASH GENERATING UNIT','The smallest identifiable group of assets generating largely independent cash inflows.','IMPAIRMENT','category'],
+['EFFECTIVE INTEREST METHOD','A method used to calculate amortised cost and allocate interest over time.','FINANCIAL INSTRUMENTS','category'],
+['CONSOLIDATED FINANCIAL STATEMENTS','Statements presenting a parent and its subsidiaries as one economic entity.','GROUP ACCOUNTING','category'],
+['TEMPORARY DIFFERENCE','A difference between the carrying amount and tax base of an asset or liability.','INCOME TAX ACCOUNTING','category'],
+['OPERATING CYCLE','The time between acquiring inventory and collecting cash from its sale.','WORKING CAPITAL','category']
+];
+let level=1,score=0,streak=0,bestStreak=0,wrong=0,maxWrong=6,answer='',used=new Set(),hintCount=0,locked=false,starting=false;
+const $=id=>document.getElementById(id);
+function difficulty(l){return ['Easy','Moderate','Challenging','Hard','Expert'][Math.min(4,l-1)]}
+function maxAttempts(l){return l<=2?6:l===3?5:4}
+const levelQuestions = [
+ [
+  ['CAPITAL','Money invested by the owner into the business.','BASIC ACCOUNTING','definition'],
+  ['ASSETS','Resources owned or controlled by a business.','BASIC ACCOUNTING','definition'],
+  ['LEDGER','The book where individual accounts are maintained.','BOOKS OF ACCOUNT','definition']
+ ],
+ [
+  ['CREDITORS','People or businesses to whom the business owes money.','CURRENT LIABILITIES','definition'],
+  ['DRAWINGS','Cash or goods taken by the owner for personal use.','OWNER’S EQUITY','definition'],
+  ['DEBTORS','Customers who owe money to the business.','CURRENT ASSETS','definition']
+ ],
+ [
+  ['DEPRECIATION','The gradual allocation of an asset’s depreciable amount over its useful life.','NON-CURRENT ASSETS','definition'],
+  ['ACCRUALS','Expenses incurred but not yet paid, or income earned but not yet received.','YEAR-END ADJUSTMENTS','definition'],
+  ['AMORTISATION','Systematic allocation of an intangible asset’s cost over its useful life.','INTANGIBLE ASSETS','definition']
+ ],
+ [
+  ['RECONCILIATION','The process of comparing two records and explaining differences.','CONTROL PROCEDURES','definition'],
+  ['CONTINGENT LIABILITY','A possible obligation dependent on uncertain future events.','FINANCIAL REPORTING','definition'],
+  ['IMPAIRMENT LOSS','The amount by which an asset’s carrying value exceeds its recoverable amount.','ASSET VALUATION','definition']
+ ],
+ [
+  ['CONSOLIDATED FINANCIAL STATEMENTS','Statements presenting a parent and its subsidiaries as one economic entity.','GROUP ACCOUNTING','category'],
+  ['CASH GENERATING UNIT','The smallest identifiable group of assets generating largely independent cash inflows.','IMPAIRMENT','category'],
+  ['EFFECTIVE INTEREST METHOD','A method used to calculate amortised cost and allocate interest over time.','FINANCIAL INSTRUMENTS','category']
+ ]
+];
+function currentData(l){
+ const options = levelQuestions[l-1];
+ return options[Math.floor(Math.random()*options.length)];
+}
+function updateHud(){$('score').textContent=score;$('level').textContent=level+' / 5';$('streak').textContent=streak;$('difficulty').textContent=difficulty(level);$('hints').textContent=Math.max(0,2-hintCount);$('progress').style.width=((level-1)/5*100)+'%';$('attemptText').textContent=(maxWrong-wrong)+' / '+maxWrong;$('hearts').textContent=Array(Math.max(0,maxWrong-wrong)).fill('♥').join(' ')||'—';$('usedCount').textContent=used.size+' letters';$('used').textContent=used.size?[...used].sort().join(' · '):'None yet'}
+function drawWord(){let el=$('word');el.innerHTML='';for(const ch of answer){let d=document.createElement('div');if(ch===' '){d.className='letter space'}else{d.className='letter'+(used.has(ch)?' revealed':'');d.textContent=used.has(ch)?ch:''}el.appendChild(d)}}
+function buildKeyboard(){let k=$('keyboard');k.innerHTML='';'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ch=>{let b=document.createElement('button');b.className='key';b.textContent=ch;b.disabled=used.has(ch)||locked;b.onclick=()=>guess(ch);if(used.has(ch)){if(answer.includes(ch))b.classList.add('good');else b.classList.add('bad')}k.appendChild(b)})}
+function revealHangman(){for(let i=1;i<=6;i++)$('p'+i).classList.toggle('show',i<=wrong)}
+function feedback(msg,type=''){let e=$('feedback');e.className='feedback '+type;e.textContent=msg}
+function loadLevel(){locked=false;wrong=0;used=new Set();hintCount=0;maxWrong=maxAttempts(level);let d=currentData(level);if(level>10&&level<=15){d=categoryMode[level-11]}else if(level>15){d=categoryMode[level-1]}
+ answer=d[0];$('clue').textContent=d[1];$('category').textContent=d[2];$('mode').textContent=d[3]==='category'?'CATEGORY MODE':'DEFINITION MODE';$('levelNote').textContent=level===1?'Start with familiar accounting vocabulary.':level===2?'Move to longer terms and account classifications.':level===3?'Apply knowledge of accounting adjustments and asset concepts.':level===4?'Interpret more advanced accounting processes.':'Expert-level group accounting terminology.';
+ drawWord();buildKeyboard();revealHangman();feedback('Select a letter. You have '+maxWrong+' wrong guesses available.');$('hintBtn').disabled=false;$('skipBtn').disabled=false;updateHud()}
+function finish(correct){locked=true;buildKeyboard();$('hintBtn').disabled=true;$('skipBtn').disabled=true;if(correct){let bonus=wrong===0?50:0;score+=100+bonus;streak++;if(streak>bestStreak)bestStreak=streak;feedback('Correct! '+answer+' — +'+(100+bonus)+' points'+(bonus?' (no-mistake bonus!)':''),'good');}else{streak=0;feedback('Out of attempts. The answer was: '+answer,'bad')}
+ updateHud();setTimeout(()=>{if(level>=5){winGame()}else{level++;loadLevel()}},correct?1450:2200)}
+function guess(ch){if(locked||used.has(ch))return;used.add(ch);if(answer.includes(ch)){drawWord();if([...answer].every(c=>c===' '||used.has(c))){finish(true)}else feedback('Good find! Keep going.','good')}else{wrong++;revealHangman();if(wrong>=maxWrong)finish(false);else feedback('Not in the word. '+(maxWrong-wrong)+' attempts remaining.','bad')}buildKeyboard();updateHud()}
+function hint(){if(locked||hintCount>=2)return;let hidden=[...new Set([...answer].filter(c=>/[A-Z]/.test(c)&&!used.has(c)))];if(!hidden.length)return;let ch=hidden[Math.floor(Math.random()*hidden.length)];hintCount++;score=Math.max(0,score-30);used.add(ch);drawWord();buildKeyboard();updateHud();if([...answer].every(c=>c===' '||used.has(c)))finish(true);else feedback('Hint revealed: '+ch+' (−30 points)','good');if(hintCount>=2)$('hintBtn').disabled=true}
+function skip(){if(locked)return;score=Math.max(0,score-50);streak=0;finish(false)}
+async function winGame(){
+ $('progress').style.width='100%';
+ const res = await window.FinPlayBridge.finishAttempt(score);
+ const st = window.FinPlayBridge.getState();
+ const left = res.attemptsLeft ?? st.attemptsLeft;
+ const canAgain = st.isAdmin || left > 0;
+ $('modal').innerHTML='<div style="font-size:48px;">'+(res.isNewBest?'🏆':'🎉')+'</div><h2>'+(res.isNewBest?'New Personal Best!':'Accounting Ace!')+'</h2><p>You completed all 5 levels.<br>Final score: <b style="color:#ffd147;font-size:22px;">'+score+'</b><br>Best score: <b>'+(res.bestScore??st.bestScore)+'</b> · Longest streak: <b>'+bestStreak+'</b>'+(st.isAdmin?'':'<br>Tries remaining: <b>'+left+'</b>')+'</p><button class="btn" id="again">'+(canAgain?(st.isAdmin?'PLAY AGAIN (PREVIEW)':'🚀 PLAY AGAIN ('+left+' LEFT)'):'🕹️ BACK TO ARCADE')+'</button>';
+ $('overlay').style.display='flex';
+ $('again').onclick=()=>{if(!canAgain){location.href='/';return;}startRun();};
+}
+async function startRun(){
+ if(starting)return;
+ starting=true;
+ try{
+  const res = await window.FinPlayBridge.beginAttempt();
+  if(!res.ok)return;
+  level=1;score=0;streak=0;bestStreak=0;
+  $('overlay').style.display='none';
+  loadLevel();
+ }finally{starting=false;}
+}
+$('hintBtn').onclick=hint;$('skipBtn').onclick=skip;$('startBtn').onclick=startRun;
+window.addEventListener('keydown',e=>{if(/^[a-z]$/i.test(e.key)&&$('overlay').style.display==='none')guess(e.key.toUpperCase())});
+updateHud();
+window.FinPlayBridge.init('finance-hangman');
+})();
+</script></body></html>
